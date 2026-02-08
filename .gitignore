@@ -1,1 +1,8 @@
-*.elf
+*
+!/**/
+!.gitignore
+!CMakeLists.txt
+!README.md
+!*.cpp
+!*.hpp
+build
