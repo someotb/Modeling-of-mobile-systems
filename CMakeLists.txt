@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 project(MMS)
 
-list(APPEND CMAKE_MODULE_PATH "/usr/share/cmake-3.28/Modules")
-
 set(CMAKE_CXX_STANDARD 17)
 
 set(THIRD_PARTY_DIR ${PROJECT_SOURCE_DIR}/third_party)
