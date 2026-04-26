@@ -1,11 +1,13 @@
 #include "funcs.hpp"
 
-std::bitset<8> decimal_to_binary(int decimal) {
+std::bitset<8> decimal_to_binary(int decimal)
+{
     std::bitset<8> binary;
     binary.reset();
     int i = 0;
 
-    while (decimal != 0 && i < 8){
+    while (decimal != 0 && i < 8)
+    {
         binary[i] = decimal % 2;
         decimal /= 2;
         ++i;
@@ -13,10 +15,107 @@ std::bitset<8> decimal_to_binary(int decimal) {
     return binary;
 }
 
-int binary_to_decimal(std::bitset<8> binary) {
+int binary_to_decimal(std::bitset<8> binary)
+{
     int decimal = 0;
-    for (int i = 7; i >= 0; --i) {
+    for (int i = 7; i >= 0; --i)
+    {
         decimal += binary[i] * pow(2, i);
     }
     return decimal;
+}
+
+std::vector<int> bitsetToVec(std::bitset<8> bs)
+{
+    std::vector<int> bits(8);
+    for (int i = 0; i < 8; i++)
+        bits[i] = bs[i];
+    return bits;
+}
+
+std::bitset<8> vecToBitset(const std::vector<int> &bits)
+{
+    std::bitset<8> bs;
+    for (int i = 0; i < 8; i++)
+        bs[i] = bits[i];
+    return bs;
+}
+
+bool isPowerOfTwo(int n)
+{
+    return n > 0 && (n & (n - 1)) == 0;
+}
+
+std::vector<int> hammingEncode(std::vector<int> data)
+{
+    int m = data.size();
+
+    int r = 0;
+    while ((1 << r) < m + r + 1)
+        r++;
+
+    int n = m + r;
+    std::vector<int> code(n + 1, 0);
+
+    int dataIdx = 0;
+    for (int i = 1; i <= n; i++)
+        if (!isPowerOfTwo(i))
+            code[i] = data[dataIdx++];
+
+    for (int i = 0; i < r; i++)
+    {
+        int p = 1 << i;
+        int xorSum = 0;
+        for (int j = p; j <= n; j++)
+            if (j & p)
+                xorSum ^= code[j];
+        code[p] = xorSum;
+    }
+
+    return std::vector<int>(code.begin() + 1, code.end());
+}
+
+std::vector<int> hammingDecode(std::vector<int> received)
+{
+    int n = received.size();
+    std::vector<int> code(n + 1);
+    for (int i = 0; i < n; i++)
+        code[i + 1] = received[i];
+
+    int errorPos = 0;
+    int r = (int)std::log2(n) + 1;
+    for (int i = 0; i < r; i++)
+    {
+        int p = 1 << i;
+        if (p > n)
+            break;
+        int xorSum = 0;
+        for (int j = p; j <= n; j++)
+            if (j & p)
+                xorSum ^= code[j];
+        if (xorSum)
+            errorPos |= p;
+    }
+
+    if (errorPos == 0)
+        std::cout << "Ошибок не обнаружено.\n";
+    else
+    {
+        std::cout << "Ошибка в позиции " << errorPos << " — исправляем!\n";
+        code[errorPos] ^= 1;
+    }
+
+    std::vector<int> data;
+    for (int i = 1; i <= n; i++)
+        if (!isPowerOfTwo(i))
+            data.push_back(code[i]);
+    return data;
+}
+
+void printBits(const std::vector<int> &bits, const std::string &label)
+{
+    std::cout << label << ": ";
+    for (int b : bits)
+        std::cout << b;
+    std::cout << "\n";
 }
