@@ -9,14 +9,12 @@ set(INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 
 # SDL2
 find_package(SDL2 REQUIRED)
-include_directories(${SDL2_INCLUDE_DIRS})
 
-# OpenGL/GLEW
+# OpenGL / GLEW
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 
-include_directories(${INCLUDE_DIR})
-
+# ImGui
 add_library(imgui STATIC
     ${THIRD_PARTY_DIR}/imgui/imgui.cpp
     ${THIRD_PARTY_DIR}/imgui/imgui_draw.cpp
@@ -28,18 +26,29 @@ add_library(imgui STATIC
 )
 target_include_directories(imgui PUBLIC ${THIRD_PARTY_DIR}/imgui)
 target_compile_options(imgui PRIVATE -fPIC)
+target_link_libraries(imgui PRIVATE SDL2::SDL2 OpenGL::GL)
 
+# ImPlot
 add_library(implot STATIC
     ${THIRD_PARTY_DIR}/implot/implot.cpp
     ${THIRD_PARTY_DIR}/implot/implot_demo.cpp
     ${THIRD_PARTY_DIR}/implot/implot_items.cpp
 )
 target_include_directories(implot PUBLIC ${THIRD_PARTY_DIR}/implot)
-target_link_libraries(implot PRIVATE imgui)
+target_link_libraries(implot PUBLIC imgui)
 target_compile_options(implot PRIVATE -fPIC)
 
+# Main executable
 add_executable(main
     ${SRC_DIR}/main.cpp
     ${SRC_DIR}/funcs.cpp
 )
-target_link_libraries(main PRIVATE imgui implot ${SDL2_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES})
+
+target_include_directories(main PRIVATE ${INCLUDE_DIR})
+
+target_link_libraries(main PRIVATE
+    implot
+    SDL2::SDL2
+    OpenGL::GL
+    GLEW::GLEW
+)
