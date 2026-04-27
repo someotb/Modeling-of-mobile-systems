@@ -6,7 +6,7 @@
 #include <string>
 #include <bitset>
 #include <complex>
-#include <fftw>
+#include <fftw3.h>
 
 std::bitset<8> decimal_to_binary(int decimal);
 int binary_to_decimal(std::bitset<8> binary);

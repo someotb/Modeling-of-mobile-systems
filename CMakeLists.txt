@@ -14,6 +14,11 @@ find_package(SDL2 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 
+# FFTW3
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(FFTW3F REQUIRED fftw3f)
+link_directories(${FFTW3F_LIBRARY_DIRS})
+
 # ImGui
 add_library(imgui STATIC
     ${THIRD_PARTY_DIR}/imgui/imgui.cpp
@@ -44,11 +49,12 @@ add_executable(main
     ${SRC_DIR}/funcs.cpp
 )
 
-target_include_directories(main PRIVATE ${INCLUDE_DIR})
+target_include_directories(main PRIVATE ${INCLUDE_DIR} ${FFTW3F_INCLUDE_DIRS})
 
 target_link_libraries(main PRIVATE
     implot
     SDL2::SDL2
     OpenGL::GL
     GLEW::GLEW
+    ${FFTW3F_LIBRARIES}
 )
