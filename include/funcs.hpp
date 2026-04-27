@@ -6,7 +6,6 @@
 #include <string>
 #include <bitset>
 #include <complex>
-#include <fftw3.h>
 
 std::bitset<8> decimal_to_binary(int decimal);
 int binary_to_decimal(std::bitset<8> binary);
@@ -21,3 +20,4 @@ std::vector<std::vector<int>> deinterleave(std::vector<int> &data, int rows, int
 std::vector<std::complex<float>> mod_qpsk_3gpp(const std::vector<int> &bits);
 std::vector<int> demod_qpsk_3gpp(const std::vector<std::complex<float>> &symbols);
 std::vector<std::complex<float>> channel_multiplexer(const std::vector<bool> &is_zeros, const std::vector<bool> &is_pilot, const std::vector<bool> &is_data, const std::vector<std::complex<float>> &data);
+std::vector<std::complex<float>> add_cp(const std::vector<std::complex<float>> &data, int cp_len);

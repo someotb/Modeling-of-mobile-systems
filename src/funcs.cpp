@@ -188,3 +188,22 @@ std::vector<std::complex<float>> channel_multiplexer(const std::vector<bool> &is
 
     return signal;
 }
+
+std::vector<std::complex<float>> add_cp(const std::vector<std::complex<float>> &data, int cp_len)
+{
+    std::vector<std::complex<float>> new_data(data.size() + cp_len);
+
+    for (size_t i = 0; i < cp_len; ++i)
+    {
+        int end_idx = data.size() - cp_len + i;
+        new_data[i] = data[end_idx];
+    }
+
+    for (size_t i = 0; i < data.size(); ++i)
+    {
+        int start_idx = i + cp_len;
+        new_data[start_idx] = data[i];
+    }
+
+    return new_data;
+}

@@ -1,6 +1,10 @@
 #include "funcs.hpp"
+#include "fft.hpp"
+#include "sharedData.hpp"
 
-int main()
+#include <thread>
+
+void run_backend(sharedData &sh_data)
 {
     std::vector<std::bitset<8>> bin_text;
     std::string orig_text;
@@ -103,6 +107,18 @@ int main()
     for (size_t i = 0; i < multi_data.size(); ++i)
         std::cout << multi_data[i] << " ";
     
+    fft dpf(multi_data.size());
+    dpf.executeBackward(multi_data);
+
+    int cp_len = 0;
+    std::cout << "Enter cyclic prefex length: ";
+    std::cin >> cp_len;
+
+    std::vector<std::complex<float>> tx = add_cp(multi_data, cp_len);
+    for (size_t i = 0; i < tx.size(); ++i)
+        std::cout << tx[i] << " ";
+
+        
     /*
     Transmission medium
     */
@@ -130,4 +146,15 @@ int main()
         hamming_decoded += char(binary_to_decimal(bs));
     }
     std::cout << "After Hamming decode: " << hamming_decoded << "\n";
+}
+
+int main()
+{
+    sharedData sh_data;
+    std::thread backend_t(run_backend, std::ref(sh_data));
+
+    if (backend_t.joinable())
+        backend_t.join();
+
+    return 0;
 }
