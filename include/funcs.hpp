@@ -13,3 +13,6 @@ std::bitset<8> vecToBitset(const std::vector<int> &bits);
 bool isPowerOfTwo(int n);
 std::vector<int> hammingEncode(std::vector<int> data);
 std::vector<int> hammingDecode(std::vector<int> received);
+void printBits(const std::vector<int> &bits, const std::string &label, int offset);
+std::vector<int> interleave(std::vector<std::vector<int>> &words);
+std::vector<std::vector<int>> deinterleave(std::vector<int> &data, int rows, int cols);

@@ -112,10 +112,35 @@ std::vector<int> hammingDecode(std::vector<int> received)
     return data;
 }
 
-void printBits(const std::vector<int> &bits, const std::string &label)
+void printBits(const std::vector<int> &bits, const std::string &label, int offset)
 {
-    std::cout << label << ": ";
-    for (int b : bits)
-        std::cout << b;
-    std::cout << "\n";
+    std::cout << label << ": \n";
+    for (size_t b = 1; b <= bits.size(); ++b)
+    {
+        std::cout << bits[b];
+        if (b % offset == 0)
+            std::cout << " ";
+    }
+}
+
+std::vector<int> interleave(std::vector<std::vector<int>> &words)
+{
+    std::vector<int> result;
+    int rows = words.size();
+    int cols = words[0].size();
+
+    for (int col = 0; col < cols; ++col)
+        for (int row = 0; row < rows; ++row)
+            result.push_back(words[row][col]);
+    return result;
+}
+
+std::vector<std::vector<int>> deinterleave(std::vector<int> &data, int rows, int cols)
+{
+    std::vector<std::vector<int>> words(rows, std::vector<int>(cols));
+    int idx = 0;
+    for (int col = 0; col < cols; col++)
+        for (int row = 0; row < rows; row++)
+            words[row][col] = data[idx++];
+    return words;
 }
