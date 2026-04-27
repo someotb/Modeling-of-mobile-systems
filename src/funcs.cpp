@@ -168,3 +168,23 @@ std::vector<int> demod_qpsk_3gpp(const std::vector<std::complex<float>> &symbols
 
     return bits;
 }
+
+std::vector<std::complex<float>> channel_multiplexer(const std::vector<bool> &is_zeros, const std::vector<bool> &is_pilot, const std::vector<bool> &is_data, const std::vector<std::complex<float>> &data)
+{
+    std::vector<std::complex<float>> signal(is_zeros.size());
+    int data_offset = 0;
+    for (size_t i = 0; i < signal.size(); ++i)
+    {
+        if (is_zeros[i])
+            signal[i] = std::complex(0.0f, 0.0f);
+        else if (is_pilot[i])
+            signal[i] = std::complex(1.0f - 2.0f * 1.0f, 1.0f - 2.0f * 1.0f) / std::sqrt(2.0f);
+        else if (is_data[i])
+        {
+            signal[i] = data[data_offset];
+            data_offset++;
+        }
+    }
+
+    return signal;
+}
