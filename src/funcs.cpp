@@ -144,3 +144,27 @@ std::vector<std::vector<int>> deinterleave(std::vector<int> &data, int rows, int
             words[row][col] = data[idx++];
     return words;
 }
+
+std::vector<std::complex<float>> mod_qpsk_3gpp(const std::vector<int> &bits)
+{
+    std::vector<std::complex<float>> symbols(bits.size() / 2);
+    for (size_t i = 0; i < bits.size() / 2; ++i)
+    {
+        float b0 = (1.0f - 2.0f * bits[2 * i]);
+        float b1 = (1.0f - 2.0f * bits[2 * i + 1]);
+        symbols[i] = std::complex(b0, b1) / std::sqrt(2.0f);
+    }
+    return symbols;
+}
+
+std::vector<int> demod_qpsk_3gpp(const std::vector<std::complex<float>> &symbols)
+{
+    std::vector<int> bits(symbols.size() * 2);
+    for (size_t i = 0; i < symbols.size(); ++i)
+    {
+        bits[2 * i] = symbols[i].real() > 0 ? 0 : 1;
+        bits[2 * i + 1] = symbols[i].imag() > 0 ? 0 : 1;
+    }
+
+    return bits;
+}

@@ -41,7 +41,23 @@ int main()
     printBits(interleaved, "Interleaved bits", 12);
     std::cout << "\n";
 
-    std::vector<std::vector<int>> deinterleaved = deinterleave(interleaved, hamming_encoded.size(), hamming_encoded[0].size());
+    std::vector<std::complex<float>> symbols = mod_qpsk_3gpp(interleaved);
+    for (size_t i = 0; i < symbols.size(); ++i)
+        std::cout << symbols[i] << " ";
+    
+    std::cout << "\n";
+
+
+    /*
+    Transmission medium
+    */
+
+
+    std::vector<int> dem_bits = demod_qpsk_3gpp(symbols);
+    printBits(dem_bits, "Demapped bits", 12);
+    std::cout << "\n";
+
+    std::vector<std::vector<int>> deinterleaved = deinterleave(dem_bits, hamming_encoded.size(), hamming_encoded[0].size());
     std::cout << "Deinterleaved bits:\n";
     for (auto &word : deinterleaved)
     {
