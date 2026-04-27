@@ -47,6 +47,7 @@ target_compile_options(implot PRIVATE -fPIC)
 add_executable(main
     ${SRC_DIR}/main.cpp
     ${SRC_DIR}/funcs.cpp
+    ${SRC_DIR}/fft.cpp
 )
 
 target_include_directories(main PRIVATE ${INCLUDE_DIR} ${FFTW3F_INCLUDE_DIRS})
