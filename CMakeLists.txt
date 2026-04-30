@@ -1,61 +1,60 @@
 cmake_minimum_required(VERSION 3.14)
-project(MMS)
+project(mms)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(THIRD_PARTY_DIR ${PROJECT_SOURCE_DIR}/third_party)
-set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
-set(INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
-
-# SDL2
-find_package(SDL2 REQUIRED)
-
-# OpenGL / GLEW
+find_package(glfw3 REQUIRED)
 find_package(OpenGL REQUIRED)
-find_package(GLEW REQUIRED)
+
+set(IMGUI_DIR ${PROJECT_SOURCE_DIR}/third_party/imgui)
+set(IMPLOT_DIR ${PROJECT_SOURCE_DIR}/third_party/implot)
+set(SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
 
 # FFTW3
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(FFTW3F REQUIRED fftw3f)
+
 link_directories(${FFTW3F_LIBRARY_DIRS})
 
 # ImGui
-add_library(imgui STATIC
-    ${THIRD_PARTY_DIR}/imgui/imgui.cpp
-    ${THIRD_PARTY_DIR}/imgui/imgui_draw.cpp
-    ${THIRD_PARTY_DIR}/imgui/imgui_demo.cpp
-    ${THIRD_PARTY_DIR}/imgui/imgui_tables.cpp
-    ${THIRD_PARTY_DIR}/imgui/imgui_widgets.cpp
-    ${THIRD_PARTY_DIR}/imgui/backends/imgui_impl_sdl2.cpp
-    ${THIRD_PARTY_DIR}/imgui/backends/imgui_impl_opengl3.cpp
+set(IMGUI_SOURCES
+    ${IMGUI_DIR}/imgui.cpp
+    ${IMGUI_DIR}/imgui_draw.cpp
+    ${IMGUI_DIR}/imgui_demo.cpp
+    ${IMGUI_DIR}/imgui_tables.cpp
+    ${IMGUI_DIR}/imgui_widgets.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
 )
-target_include_directories(imgui PUBLIC ${THIRD_PARTY_DIR}/imgui)
-target_compile_options(imgui PRIVATE -fPIC)
-target_link_libraries(imgui PRIVATE SDL2::SDL2 OpenGL::GL)
 
 # ImPlot
-add_library(implot STATIC
-    ${THIRD_PARTY_DIR}/implot/implot.cpp
-    ${THIRD_PARTY_DIR}/implot/implot_demo.cpp
-    ${THIRD_PARTY_DIR}/implot/implot_items.cpp
-)
-target_include_directories(implot PUBLIC ${THIRD_PARTY_DIR}/implot)
-target_link_libraries(implot PUBLIC imgui)
-target_compile_options(implot PRIVATE -fPIC)
-
-# Main executable
-add_executable(main
-    ${SRC_DIR}/main.cpp
-    ${SRC_DIR}/funcs.cpp
-    ${SRC_DIR}/fft.cpp
+set(IMPLOT_SOURCES
+    ${IMPLOT_DIR}/implot.cpp
+    ${IMPLOT_DIR}/implot_demo.cpp
+    ${IMPLOT_DIR}/implot_items.cpp
 )
 
-target_include_directories(main PRIVATE ${INCLUDE_DIR} ${FFTW3F_INCLUDE_DIRS})
+add_executable(${PROJECT_NAME}
+    ${SOURCE_DIR}/main.cpp
+    ${SOURCE_DIR}/funcs.cpp
+    ${SOURCE_DIR}/fft.cpp
+    ${IMGUI_SOURCES}
+    ${IMPLOT_SOURCES}
+)
 
-target_link_libraries(main PRIVATE
-    implot
-    SDL2::SDL2
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${IMGUI_DIR}
+    ${IMGUI_DIR}/backends
+    ${IMPLOT_DIR}
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    GL_SILENCE_DEPRECATION    
+)
+
+target_link_libraries(${PROJECT_NAME}
+    glfw
     OpenGL::GL
-    GLEW::GLEW
     ${FFTW3F_LIBRARIES}
 )

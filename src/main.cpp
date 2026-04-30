@@ -1,13 +1,12 @@
 #include "funcs.hpp"
 #include "fft.hpp"
 #include "sharedData.hpp"
-
 #include "imgui.h"
-#include "backends/imgui_impl_sdl2.h"
-#include "backends/imgui_impl_opengl3.h"
-#include "implot.h"
-#include <SDL2/SDL.h>
-#include <GL/glew.h>
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
+#include <GLFW/glfw3.h>
+#include <cstdio>
 #include <thread>
 
 void run_backend(sharedData &sh_data)
@@ -156,71 +155,68 @@ void run_backend(sharedData &sh_data)
 
 void run_gui(sharedData &sh_data)
 {
-    SDL_Init(SDL_INIT_VIDEO);
-    SDL_Window* window = SDL_CreateWindow(
-        "MMS",
-        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        1280, 720,
-        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
-    );
-    SDL_GLContext gl_context = SDL_GL_CreateContext(window);
-    SDL_GL_MakeCurrent(window, gl_context);
-    SDL_GL_SetSwapInterval(1);
+    if (!glfwInit()) return;
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    #ifdef APPLE
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    #endif
+
+    // Создаём окно
+    GLFWwindow* window = glfwCreateWindow(1280, 720, "My ImGui App", nullptr, nullptr);
+    if (!window) return;
+    glfwMakeContextCurrent(window);
+    glfwSwapInterval(1);
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImPlot::CreateContext();
+    ImGui::StyleColorsDark();
 
-    ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
-    ImGui_ImplOpenGL3_Init("#version 130");
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 330");
 
-    bool running = true;
-    while (running)
+    while (!glfwWindowShouldClose(window))
     {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            ImGui_ImplSDL2_ProcessEvent(&event);
-            if (event.type == SDL_QUIT)
-                running = false;
-        }
+        glfwPollEvents();
 
         ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplSDL2_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        // Твоё окно
-        ImGui::Begin("MMS Panel");
-        ImGui::Text("Hello!");
-        // сюда будешь добавлять графики, кнопки и тд
+        ImGui::Begin("Hello!");
+        ImGui::Text("Hello World!");
         ImGui::End();
 
         ImGui::Render();
+        int w, h;
+        glfwGetFramebufferSize(window, &w, &h);
+        glViewport(0, 0, w, h);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        SDL_GL_SwapWindow(window);
+
+        glfwSwapBuffers(window);
     }
 
     ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
-    ImPlot::DestroyContext();
+    ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
-    SDL_GL_DeleteContext(gl_context);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+    glfwDestroyWindow(window);
+    glfwTerminate();
+    return;
 }
 
 int main()
 {
     sharedData sh_data;
     std::thread backend_t(run_backend, std::ref(sh_data));
-    std::thread gui_t(run_gui, std::ref(sh_data));
+    run_gui(sh_data);
 
     if (backend_t.joinable())
         backend_t.join();
-    if (gui_t.joinable())
-        gui_t.join();
 
     return 0;
 }
