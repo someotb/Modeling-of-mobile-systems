@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(mms)
+project(main)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -38,6 +38,8 @@ add_executable(${PROJECT_NAME}
     ${SOURCE_DIR}/main.cpp
     ${SOURCE_DIR}/funcs.cpp
     ${SOURCE_DIR}/fft.cpp
+    ${SOURCE_DIR}/gui.cpp
+    ${SOURCE_DIR}/backend.cpp
     ${IMGUI_SOURCES}
     ${IMPLOT_SOURCES}
 )
