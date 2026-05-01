@@ -7,7 +7,7 @@
 #include <GLFW/glfw3.h>
 #include <cstdio>
 
-void run_gui(sharedData &sh_data)
+void run_gui(sharedData &sd)
 {
     if (!glfwInit()) return;
 
@@ -44,9 +44,42 @@ void run_gui(sharedData &sh_data)
         ImGui::NewFrame();
         ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
 
-        ImGui::Begin("Hello!");
-        ImGui::Text("Hello World!");
+        // Start GUI
+
+
+        if (ImGui::Begin("Text Input"))
+        {
+            ImGui::InputText("Msg", sd.d.c_msg, 101);
+            sd.d.s_msg = sd.d.c_msg;
+            
+            int len = strlen(sd.d.c_msg);
+            
+            if (len < 30)
+                ImGui::TextColored({1,0.3f,0.3f,1}, "Min 30 symbols (%d/30)", len);
+            else
+                ImGui::TextColored({0.3f,1,0.3f,1}, "%d symbols", len);
+            
+            ImGui::BeginDisabled(len < 30 || len > 100);
+            if (ImGui::Button("Send"))
+                sd.f.msg_r = true;
+
+            ImGui::EndDisabled();
+        }
         ImGui::End();
+
+        if (ImGui::Begin("Bin Text"))
+        {
+            if (sd.f.bin_msg_r)
+            {
+                ImPlot::BeginPlot("Msg");
+                ImPlot::PlotLine("Data", sd.d.bin_text.data(), (int)sd.d.bin_text.size());
+                ImPlot::EndPlot();
+            }
+        }
+        ImGui::End();
+
+
+        // End GUI
 
         ImGui::Render();
         int w, h;

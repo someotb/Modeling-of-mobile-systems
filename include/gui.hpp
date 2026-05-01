@@ -2,4 +2,4 @@
 
 #include "sharedData.hpp"
 
-void run_gui(sharedData &sh_data);
+void run_gui(sharedData &sd);

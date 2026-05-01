@@ -2,4 +2,4 @@
 
 #include "sharedData.hpp"
 
-void run_backend(sharedData &sh_data);
+void run_backend(sharedData &sd);

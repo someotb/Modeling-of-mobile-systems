@@ -6,9 +6,9 @@
 
 int main()
 {
-    sharedData sh_data;
-    std::thread backend_t(run_backend, std::ref(sh_data));
-    run_gui(sh_data);
+    sharedData sd;
+    std::thread backend_t(run_backend, std::ref(sd));
+    run_gui(sd);
 
     if (backend_t.joinable())
         backend_t.join();
