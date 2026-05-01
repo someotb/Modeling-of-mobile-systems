@@ -12,34 +12,25 @@ void run_backend(sharedData &sd)
     {
         if (sd.f.msg_r == true)
         {
+            int offset = 0;
+            sd.d.bin_text.resize(sd.d.s_msg.size() * 8);
             for (char c : sd.d.s_msg)
             {
                 auto bits = bitsetToVec(decimal_to_binary(int(c)));
-                for (int b : bits)
-                    sd.d.bin_text.push_back(b);
+                for (size_t b = 0; b < bits.size(); ++b)
+                    sd.d.bin_text[offset + b] = bits[b];
+                offset += 8;
             }
             sd.f.msg_r = false;
-            sd.f.bin_msg_r = true; 
+            sd.f.bin_msg_r = true;
+
+            sd.d.hamming_encoded = hammingEncode(sd.d.bin_text);
+            sd.f.ham_msg_r = true;
         }
+
     }
 
-    // std::vector<std::vector<int>> hamming_encoded;
-
-    // for (auto &bs : bin_text)
-    // {
-    //     auto bits = bitsetToVec(bs);
-    //     auto encoded = hammingEncode(bits);
-    //     hamming_encoded.push_back(encoded);
-    // }
-
-    // std::cout << "Hamming encoded:\n";
-    // for (auto &word : hamming_encoded)
-    // {
-    //     for (int b : word)
-    //         std::cout << b;
-    //     std::cout << " ";
-    // }
-    // std::cout << "\n";
+    
 
     // std::vector<int> interleaved = interleave(hamming_encoded);
     // printBits(interleaved, "Interleaved bits", 12);

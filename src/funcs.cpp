@@ -112,17 +112,6 @@ std::vector<int> hammingDecode(std::vector<int> received)
     return data;
 }
 
-void printBits(const std::vector<int> &bits, const std::string &label, int offset)
-{
-    std::cout << label << ": \n";
-    for (size_t b = 1; b <= bits.size(); ++b)
-    {
-        std::cout << bits[b];
-        if (b % offset == 0)
-            std::cout << " ";
-    }
-}
-
 std::vector<int> interleave(std::vector<std::vector<int>> &words)
 {
     std::vector<int> result;

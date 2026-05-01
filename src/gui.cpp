@@ -72,7 +72,18 @@ void run_gui(sharedData &sd)
             if (sd.f.bin_msg_r)
             {
                 ImPlot::BeginPlot("Msg");
-                ImPlot::PlotLine("Data", sd.d.bin_text.data(), (int)sd.d.bin_text.size());
+                ImPlot::PlotLine("Data", sd.d.bin_text.data(), sd.d.bin_text.size());
+                ImPlot::EndPlot();
+            }
+        }
+        ImGui::End();
+
+        if (ImGui::Begin("Hamming"))
+        {
+            if (sd.f.ham_msg_r)
+            {
+                ImPlot::BeginPlot("Hamming");
+                ImPlot::PlotLine("Data", sd.d.hamming_encoded.data(), sd.d.hamming_encoded.size());
                 ImPlot::EndPlot();
             }
         }
@@ -99,6 +110,7 @@ void run_gui(sharedData &sd)
         }
     }
 
+    sd.f.exit = true;
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImPlot::DestroyContext();
