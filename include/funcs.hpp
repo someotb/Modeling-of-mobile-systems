@@ -1,5 +1,7 @@
 #pragma once
 
+#include "sharedData.hpp"
+
 #include <cmath>
 #include <iostream>
 #include <vector>
@@ -13,7 +15,7 @@ std::vector<int> bitsetToVec(std::bitset<8> bs);
 std::bitset<8> vecToBitset(const std::vector<int> &bits);
 bool isPowerOfTwo(int n);
 std::vector<int> hammingEncode(std::vector<int> data);
-std::vector<int> hammingDecode(std::vector<int> received);
+std::vector<int> hammingDecode(std::vector<int> received, sharedData &sd);
 void printBits(const std::vector<int> &bits, const std::string &label, int offset);
 std::vector<int> interleave(std::vector<std::vector<int>> &words);
 std::vector<std::vector<int>> deinterleave(std::vector<int> &data, int rows, int cols);

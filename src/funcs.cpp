@@ -75,7 +75,7 @@ std::vector<int> hammingEncode(std::vector<int> data)
     return std::vector<int>(code.begin() + 1, code.end());
 }
 
-std::vector<int> hammingDecode(std::vector<int> received)
+std::vector<int> hammingDecode(std::vector<int> received, sharedData &sd)
 {
     int n = received.size();
     std::vector<int> code(n + 1);
@@ -97,11 +97,9 @@ std::vector<int> hammingDecode(std::vector<int> received)
             errorPos |= p;
     }
 
-    if (errorPos == 0)
-        std::cout << "Ошибок не обнаружено.\n";
-    else
+    if (errorPos != 0)
     {
-        std::cout << "Ошибка в позиции " << errorPos << " — исправляем!\n";
+        sd.d.ham.errs_pos.push_back(errorPos);
         code[errorPos] ^= 1;
     }
 

@@ -13,6 +13,8 @@ void run_backend(sharedData &sd)
     std::vector<std::complex<float>> symbols;
     std::vector<std::complex<float>> multi_data;
     std::vector<std::complex<float>> tx;
+    std::vector<int> dem_bits;
+    std::vector<std::vector<int>> deinterleaved;
     
     while (!sd.f.exit)
     {
@@ -79,38 +81,23 @@ void run_backend(sharedData &sd)
             dpf.executeBackward(multi_data);
             sd.d.tx = add_cp(multi_data, sd.p.cp_len);
 
+            /*
+            Transmission medium
+            */
 
+            dem_bits = demod_qpsk_3gpp(symbols);
+            deinterleaved = deinterleave(dem_bits, hamming_encoded.size(), hamming_encoded[0].size());
+            sd.d.r_msg = "";
+            sd.d.ham.errs_pos.clear();
 
+            for (auto &word : deinterleaved)
+            {
+                auto data_bits = hammingDecode(word, sd);
+                auto bs = vecToBitset(data_bits);
+                sd.d.r_msg += char(binary_to_decimal(bs));
+            }
 
             sd.f.msg_r = false;
         }
     }
-
-    /*
-    Transmission medium
-    */
-
-
-    // std::vector<int> dem_bits = demod_qpsk_3gpp(symbols);
-    // printBits(dem_bits, "Demapped bits", 12);
-    // std::cout << "\n";
-
-    // std::vector<std::vector<int>> deinterleaved = deinterleave(dem_bits, hamming_encoded.size(), hamming_encoded[0].size());
-    // std::cout << "Deinterleaved bits:\n";
-    // for (auto &word : deinterleaved)
-    // {
-    //     for (int b : word)
-    //         std::cout << b;
-    //     std::cout << " ";
-    // }
-    // std::cout << "\n";
-
-    // std::string hamming_decoded = "";   
-    // for (auto &word : deinterleaved)
-    // {
-    //     auto data_bits = hammingDecode(word);
-    //     auto bs = vecToBitset(data_bits);
-    //     hamming_decoded += char(binary_to_decimal(bs));
-    // }
-    // std::cout << "After Hamming decode: " << hamming_decoded << "\n";
 }

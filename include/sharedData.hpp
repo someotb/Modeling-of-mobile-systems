@@ -12,7 +12,15 @@ struct sharedData
     {
         char c_msg[101] = "";
         std::string s_msg;
+        std::string r_msg = "";
         std::vector<std::complex<float>> tx;
+
+        struct hamming
+        {
+            std::vector<int> errs_pos;
+        };
+        
+        hamming ham;
     };
     
     struct flags
@@ -27,7 +35,6 @@ struct sharedData
         float zero_guard = 0.1;
         int cp_len = 16;
     };
-    
     
     data d;
     flags f;

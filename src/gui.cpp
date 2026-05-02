@@ -47,7 +47,7 @@ void run_gui(sharedData &sd)
         // Start GUI
 
 
-        if (ImGui::Begin("Text Input"))
+        if (ImGui::Begin("Text"))
         {
             ImGui::InputText("Msg", sd.d.c_msg, 101);
             sd.d.s_msg = sd.d.c_msg;
@@ -64,6 +64,13 @@ void run_gui(sharedData &sd)
                 sd.f.msg_r = true;
 
             ImGui::EndDisabled();
+
+            ImGui::Text("Decoded text: %s", sd.d.r_msg.c_str());
+
+            ImGui::Text("Errors positions");
+            for (size_t i = 0; i < sd.d.ham.errs_pos.size(); ++i)
+                ImGui::Text("Error pos: %d", sd.d.ham.errs_pos[i]);
+
             ImGui::End();
         }
 

@@ -1,6 +1,5 @@
 #include "backend.hpp"
 #include "gui.hpp"
-#include "sharedData.hpp"
 
 #include <thread>
 
