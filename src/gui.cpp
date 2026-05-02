@@ -64,31 +64,39 @@ void run_gui(sharedData &sd)
                 sd.f.msg_r = true;
 
             ImGui::EndDisabled();
+            ImGui::End();
         }
-        ImGui::End();
 
-        if (ImGui::Begin("Bin Text"))
+        if (ImGui::Begin("PlotLine"))
         {
-            if (sd.f.bin_msg_r)
+            if (ImPlot::BeginPlot("I/Q", ImVec2(ImGui::GetContentRegionAvail())))
             {
-                ImPlot::BeginPlot("Msg");
-                ImPlot::PlotLine("Data", sd.d.bin_text.data(), sd.d.bin_text.size());
+                float* raw = reinterpret_cast<float*>(sd.d.tx.data());
+                int n = sd.d.tx.size();
+                int stride = sizeof(std::complex<float>);
+
+                ImPlot::PlotLine("I", raw, n, 1.0, 0.0, 0, 0, stride);
+                ImPlot::PlotLine("Q", raw + 1, n, 1.0, 0.0, 0, 0, stride);
+
                 ImPlot::EndPlot();
             }
+            ImGui::End();
         }
-        ImGui::End();
 
-        if (ImGui::Begin("Hamming"))
+        if (ImGui::Begin("PlotScatter"))
         {
-            if (sd.f.ham_msg_r)
+            if (ImPlot::BeginPlot("Constelation Diagramm", ImVec2(ImGui::GetContentRegionAvail())))
             {
-                ImPlot::BeginPlot("Hamming");
-                ImPlot::PlotLine("Data", sd.d.hamming_encoded.data(), sd.d.hamming_encoded.size());
+                float* raw = reinterpret_cast<float*>(sd.d.tx.data());
+                int n = sd.d.tx.size();
+                int stride = sizeof(std::complex<float>);
+
+                ImPlot::PlotScatter("I/Q", raw, raw + 1, n, 0, 0, stride);
+
                 ImPlot::EndPlot();
             }
+            ImGui::End();
         }
-        ImGui::End();
-
 
         // End GUI
 

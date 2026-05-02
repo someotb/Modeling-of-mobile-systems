@@ -4,6 +4,7 @@
 #include <atomic>
 #include <vector>
 #include <bitset>
+#include <complex>
 
 struct sharedData
 {
@@ -11,20 +12,24 @@ struct sharedData
     {
         char c_msg[101] = "";
         std::string s_msg;
-        std::vector<int> bin_text;
-        std::vector<int> hamming_encoded;
-        std::vector<int> interleaved;
+        std::vector<std::complex<float>> tx;
     };
     
     struct flags
     {
-        std::atomic_bool exit = false;
-        std::atomic_bool msg_r = false;
-        std::atomic_bool bin_msg_r = false;
-        std::atomic_bool ham_msg_r = false;
-        std::atomic_bool inter_msg_r = false;
+        std::atomic_bool exit{false};
+        std::atomic_bool msg_r{false};
     };
+
+    struct params
+    {
+        int pilots_step = 7;
+        float zero_guard = 0.1;
+        int cp_len = 16;
+    };
+    
     
     data d;
     flags f;
+    params p;
 };
