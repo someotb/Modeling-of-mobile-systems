@@ -201,7 +201,7 @@ std::vector<std::complex<float>> add_cp(const std::vector<std::complex<float>> &
     return new_data;
 }
 
-std::vector<std::complex<float>> add_multipath(std::vector<std::complex<float>> &tx, sharedData &sd)
+std::vector<std::complex<float>> add_multipath(std::vector<std::complex<float>> &data, sharedData &sd)
 {
     float c = 3e8;
     float Ts = 1 / sd.p.s.bandwidth;
@@ -227,28 +227,41 @@ std::vector<std::complex<float>> add_multipath(std::vector<std::complex<float>> 
 
     auto max_latency = std::ranges::max(latency);
 
-    std::vector<std::complex<float>> tx_multipath(tx.size() + max_latency, {0.0f, 0.0f});
+    std::vector<std::complex<float>> tx_multipath(data.size() + max_latency, {0.0f, 0.0f});
     for (size_t k = 0; k < tx_multipath.size(); ++k)
-    {
         for (size_t i = 0; i < latency.size(); ++i)
-        {
-            if (k >= latency[i] && k - latency[i] < tx.size())
-                tx_multipath[k] += attenuationCoeffs[i] * tx[k - latency[i]];
-        }
-    }
+            if (k >= latency[i] && k - latency[i] < data.size())
+                tx_multipath[k] += attenuationCoeffs[i] * data[k - latency[i]];
+
     return tx_multipath;
 }
 
-std::vector<std::complex<float>> add_wgn(std::vector<std::complex<float>> &tx, sharedData &sd)
+std::vector<std::complex<float>> add_wgn(std::vector<std::complex<float>> &data, sharedData &sd)
 {
     float psd_linear = std::pow(10.0f, sd.p.w.psd / 10.0f);
     float sigma = std::sqrt(psd_linear * sd.p.s.bandwidth / 2.0f);
     std::mt19937 gen(std::random_device{}());
     std::normal_distribution<float> dist(0.0f, sigma);
 
-    std::vector<std::complex<float>> tx_noisy(tx.size());
+    std::vector<std::complex<float>> tx_noisy(data.size());
     for (size_t i = 0; i < tx_noisy.size(); ++i)
-        tx_noisy[i] = tx[i] + std::complex<float>(dist(gen), dist(gen));
+        tx_noisy[i] = data[i] + std::complex<float>(dist(gen), dist(gen));
 
     return tx_noisy;
+}
+
+std::vector<std::complex<float>> rm_cp(const std::vector<std::complex<float>> &data, size_t tx_size, float size_cp)
+{
+    int cp_len = tx_size * size_cp;
+    return std::vector<std::complex<float>>(data.begin() + cp_len, data.end());
+}
+
+std::vector<std::complex<float>> rm_zeros(const std::vector<std::complex<float>> &data, const std::vector<bool> &is_zeros)
+{
+    std::vector<std::complex<float>> data_no_zeros;
+    for (size_t i = 0; i < data.size(); ++i)
+        if (!is_zeros[i])
+            data_no_zeros.push_back(data[i]);
+
+    return data_no_zeros;
 }

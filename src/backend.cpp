@@ -9,12 +9,15 @@ void run_backend(sharedData &sd)
     std::vector<std::bitset<8>> bin_text;
     std::vector<std::vector<int>> hamming_encoded;
     std::vector<int> interleaved;
+    std::vector<std::complex<float>> selected;
     std::vector<std::complex<float>> symbols;
     std::vector<std::complex<float>> multi_data;
     std::vector<std::complex<float>> tx;
     std::vector<std::complex<float>> tx_noisy;
     std::vector<std::complex<float>> tx_multi_path;
     std::vector<std::complex<float>> tx_multi_path_noisy;
+    std::vector<std::complex<float>> rx_rm_cp;
+    std::vector<std::complex<float>> rx_rm_cp_zeros;
 
     std::vector<int> dem_bits;
     std::vector<std::vector<int>> deinterleaved;
@@ -90,6 +93,29 @@ void run_backend(sharedData &sd)
 
             // Transmission medium
 
+            switch (sd.f.s.view_mode)
+            {
+                case ViewMode::Raw:
+                    selected = tx;
+                    break;
+                case ViewMode::Noisy:
+                    selected = tx_noisy;
+                    break;
+                case ViewMode::Multipath:
+                    selected = tx_multi_path;
+                    break;
+                case ViewMode::MultipathNoisy:
+                    selected = tx_multi_path_noisy;
+                    break;
+            }
+
+            rx_rm_cp = rm_cp(selected, multi_data.size(), sd.p.o.cp_len);
+            dpf.executeForward(rx_rm_cp);
+            rx_rm_cp_zeros = rm_zeros(rx_rm_cp, is_zeros);
+
+            std::lock_guard<std::mutex> lock(sd.s.data_mutex);
+            sd.d.gui_output = rx_rm_cp_zeros;
+
             dem_bits = demod_qpsk_3gpp(symbols);
             deinterleaved = deinterleave(dem_bits, hamming_encoded.size(), hamming_encoded[0].size());
             sd.d.r_msg = "";
@@ -102,25 +128,5 @@ void run_backend(sharedData &sd)
                 sd.d.r_msg += char(binary_to_decimal(bs));
             }
         }
-        // GUI
-       
-        std::lock_guard<std::mutex> lock(sd.s.data_mutex);
-        switch (sd.f.s.view_mode)
-        {
-            case ViewMode::Raw:
-                sd.d.gui_output = tx;
-                break;
-            case ViewMode::Noisy:
-                sd.d.gui_output = tx_noisy;
-                break;
-            case ViewMode::Multipath:
-                sd.d.gui_output = tx_multi_path;
-                break;
-            case ViewMode::MultipathNoisy:
-                sd.d.gui_output = tx_multi_path_noisy;
-                break;
-        }
-        
-        // GUI
     }
 }

@@ -77,6 +77,11 @@ void run_gui(sharedData &sd)
             {
                 ImGui::InputInt("Beam count", &sd.p.m.cnt_beam, 1, 10);
                 ImGui::InputInt("Max beam length", &sd.p.m.path_len, 1, 10);
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("AGN"))
+            {
                 ImGui::InputInt("PSD", &sd.p.w.psd, 1, 10);
                 ImGui::EndMenu();
             }
@@ -91,7 +96,10 @@ void run_gui(sharedData &sd)
                 ImGui::SameLine();
                 
                 if (len < 30)
+                {
                     ImGui::TextColored({1,0.3f,0.3f,1}, "[30 <= %d <= 100]", len);
+                    sd.d.s_msg = "Hello World! Hello Heaven! Hello Paradise! Hello Hello!";
+                }
                 else
                     ImGui::TextColored({0.3f,1,0.3f,1}, "[30 <= %d <= 100]", len);
                 
