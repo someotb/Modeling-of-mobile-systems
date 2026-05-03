@@ -1,5 +1,4 @@
 #include "backend.hpp"
-
 #include "funcs.hpp"
 #include "fft.hpp"
 
@@ -13,12 +12,15 @@ void run_backend(sharedData &sd)
     std::vector<std::complex<float>> symbols;
     std::vector<std::complex<float>> multi_data;
     std::vector<std::complex<float>> tx;
+    std::vector<std::complex<float>> tx_multi_path;
+    std::vector<std::complex<float>> tx_multi_path_noisy;
+
     std::vector<int> dem_bits;
     std::vector<std::vector<int>> deinterleaved;
     
-    while (!sd.f.exit)
+    while (!sd.f.a.exit)
     {
-        if (sd.f.msg_r == true)
+        if (sd.f.s.msg_r)
         {
             bin_text.clear();
             hamming_encoded.clear();
@@ -38,8 +40,6 @@ void run_backend(sharedData &sd)
                 hamming_encoded.push_back(encoded);
             }
             
-            // В GUI можно сделать кнопку clear, которая будет отчищать сообщение
-
             interleaved = interleave(hamming_encoded);
             symbols = mod_qpsk_3gpp(interleaved);
             int N_rs = std::floor(symbols.size() / sd.p.o.pilots_step);
@@ -79,11 +79,14 @@ void run_backend(sharedData &sd)
             multi_data = channel_multiplexer(is_zeros, is_pilot, is_data, symbols);
             fft dpf(multi_data.size());
             dpf.executeBackward(multi_data);
-            sd.d.tx = add_cp(multi_data, sd.p.o.cp_len);
+            tx = add_cp(multi_data, sd.p.o.cp_len);
 
-            /*
-            Transmission medium
-            */
+            // Transmission medium
+
+            tx_multi_path = add_multipath(tx, sd);
+            tx_multi_path_noisy = add_wgn(tx_multi_path, sd);
+
+            // Transmission medium
 
             dem_bits = demod_qpsk_3gpp(symbols);
             deinterleaved = deinterleave(dem_bits, hamming_encoded.size(), hamming_encoded[0].size());
@@ -96,8 +99,23 @@ void run_backend(sharedData &sd)
                 auto bs = vecToBitset(data_bits);
                 sd.d.r_msg += char(binary_to_decimal(bs));
             }
-
-            sd.f.msg_r = false;
         }
+        // GUI
+       
+        std::lock_guard<std::mutex> lock(sd.s.data_mutex);
+        switch (sd.f.s.view_mode)
+        {
+            case ViewMode::Raw:
+                sd.d.gui_output = tx;
+                break;
+            case ViewMode::Multipath:
+                sd.d.gui_output = tx_multi_path;
+                break;
+            case ViewMode::Noisy:
+                sd.d.gui_output = tx_multi_path_noisy;
+                break;
+        }
+        
+        // GUI
     }
 }

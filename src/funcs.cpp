@@ -1,5 +1,10 @@
 #include "funcs.hpp"
 
+#include <algorithm>
+#include <random>
+
+#define M_PIf 3.14159265358979323846f
+
 std::bitset<8> decimal_to_binary(int decimal)
 {
     std::bitset<8> binary;
@@ -194,4 +199,56 @@ std::vector<std::complex<float>> add_cp(const std::vector<std::complex<float>> &
     }
 
     return new_data;
+}
+
+std::vector<std::complex<float>> add_multipath(std::vector<std::complex<float>> &tx, sharedData &sd)
+{
+    float c = 3e8;
+    float Ts = 1 / sd.p.s.bandwidth;
+
+    std::vector<int> beam_len(sd.p.m.cnt_beam);
+    for (size_t i = 0; i < beam_len.size(); ++i)
+        beam_len[i] = 10 + rand() % (sd.p.m.path_len - 10 + 1);
+
+
+    auto min_beam_it = std::ranges::min_element(beam_len);
+    auto index_beam_it = std::distance(beam_len.begin(), min_beam_it);
+    int first_beam = beam_len[0];
+    beam_len[0] = *min_beam_it;
+    beam_len[index_beam_it] = first_beam;
+
+    std::vector<int> latency(sd.p.m.cnt_beam);
+    for (size_t i = 0; i < latency.size(); ++i)
+        latency[i] = std::round((beam_len[i] - beam_len[0]) / (c * Ts));
+
+    std::vector<float> attenuationCoeffs(beam_len.size(), 0);
+    for (size_t i = 0; i < attenuationCoeffs.size(); ++i)
+        attenuationCoeffs[i] = c / (4 * M_PIf * beam_len[i] * sd.p.s.carr_freq);
+
+    auto max_latency = std::ranges::max(latency);
+
+    std::vector<std::complex<float>> tx_multipath(tx.size() + max_latency, {0.0f, 0.0f});
+    for (size_t k = 0; k < tx_multipath.size(); ++k)
+    {
+        for (size_t i = 0; i < latency.size(); ++i)
+        {
+            if (k >= latency[i] && k - latency[i] < tx.size())
+                tx_multipath[k] += attenuationCoeffs[i] * tx[k - latency[i]];
+        }
+    }
+    return tx_multipath;
+}
+
+std::vector<std::complex<float>> add_wgn(std::vector<std::complex<float>> &tx, sharedData &sd)
+{
+    float psd_linear = std::pow(10.0f, sd.p.w.psd / 10.0f);
+    float sigma = std::sqrt(psd_linear * sd.p.s.bandwidth / 2.0f);
+    std::mt19937 gen(std::random_device{}());
+    std::normal_distribution<float> dist(0.0f, sigma);
+
+    std::vector<std::complex<float>> tx_noisy(tx.size());
+    for (size_t i = 0; i < tx_noisy.size(); ++i)
+        tx_noisy[i] = tx[i] + std::complex<float>(dist(gen), dist(gen));
+
+    return tx_noisy;
 }

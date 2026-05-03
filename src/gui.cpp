@@ -48,30 +48,19 @@ void run_gui(sharedData &sd)
 
         if (ImGui::BeginMainMenuBar())
         {
+            if (ImGui::BeginMenu("View"))
+            {
+                if (ImGui::RadioButton("Raw TX", (int*)&sd.f.s.view_mode, (int)ViewMode::Raw)){}
+                if (ImGui::RadioButton("Multipath", (int*)&sd.f.s.view_mode, (int)ViewMode::Multipath)){}
+                if (ImGui::RadioButton("Multipath+AGN", (int*)&sd.f.s.view_mode, (int)ViewMode::Noisy)){}
+                ImGui::EndMenu();
+            }
+
             if (ImGui::BeginMenu("Control Panel"))
             {
-                ImGui::InputText("Msg", sd.d.c_msg, 101);
-                sd.d.s_msg = sd.d.c_msg;
-                
-                int len = strlen(sd.d.c_msg);
-                
-                if (len < 30)
-                    ImGui::TextColored({1,0.3f,0.3f,1}, "Min 30 symbols (%d/30)", len);
-                else
-                    ImGui::TextColored({0.3f,1,0.3f,1}, "%d symbols", len);
-                
-                ImGui::BeginDisabled(len < 30 || len > 100);
-                if (ImGui::Button("Send"))
-                    sd.f.msg_r = true;
-        
-                ImGui::EndDisabled();
-        
-                ImGui::Text("Decoded text: %s", sd.d.r_msg.c_str());
-        
-                ImGui::Text("Errors positions");
-                for (size_t i = 0; i < sd.d.ham.errs_pos.size(); ++i)
-                    ImGui::Text("Error pos: %d", sd.d.ham.errs_pos[i]);
-
+                bool mess_r = sd.f.s.msg_r;
+                if (ImGui::MenuItem("Send", NULL, &mess_r))
+                    sd.f.s.msg_r = mess_r;
                 ImGui::EndMenu();
             }
 
@@ -82,6 +71,56 @@ void run_gui(sharedData &sd)
                 ImGui::InputFloat("Zero-to-data ratio", &sd.p.o.zero_guard, 0.05, 0.1);
                 ImGui::EndMenu();
             }
+
+            if (ImGui::BeginMenu("MultiPath"))
+            {
+                ImGui::InputInt("Beam count", &sd.p.m.cnt_beam, 1, 10);
+                ImGui::InputInt("Max beam length", &sd.p.m.path_len, 1, 10);
+                ImGui::InputInt("PSD", &sd.p.w.psd, 1, 10);
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Text Editor"))
+            {
+                ImGui::InputText("###Msg", sd.d.c_msg, 101);
+                sd.d.s_msg = sd.d.c_msg;
+                
+                int len = strlen(sd.d.c_msg);
+
+                ImGui::SameLine();
+                
+                if (len < 30)
+                    ImGui::TextColored({1,0.3f,0.3f,1}, "[30 <= %d <= 100]", len);
+                else
+                    ImGui::TextColored({0.3f,1,0.3f,1}, "[30 <= %d <= 100]", len);
+                
+                ImGui::EndMenu();
+            }
+
+            static bool debug_panel_open = false;
+            if (ImGui::BeginMenu("Debug"))
+            {
+                ImGui::MenuItem("Open Debug Panel", NULL, &debug_panel_open);
+                ImGui::EndMenu();
+            }
+
+            if (debug_panel_open)
+            {
+                ImGui::Begin("Debug Panel", &debug_panel_open);
+                ImGui::TextColored({0.3f,1,0.3f,1}, "Decoded text: ");
+                ImGui::SameLine();
+                ImGui::Text("%s", sd.d.r_msg.c_str());
+
+                if (sd.d.ham.errs_pos.empty())
+                    ImGui::TextColored({0.3f,1,0.3f,1}, "No errors");
+                else
+                {
+                    ImGui::TextColored({1,0.3f,0.3f,1}, "Errors positions: ");
+                    for (size_t i = 0; i < sd.d.ham.errs_pos.size(); ++i)
+                    ImGui::TextColored({1,0.3f,0.3f,1}, "Error pos: %d", sd.d.ham.errs_pos[i]);
+                }
+                ImGui::End();
+            }
                 
             ImGui::EndMainMenuBar();
         }
@@ -90,8 +129,9 @@ void run_gui(sharedData &sd)
         {
             if (ImPlot::BeginPlot("I/Q", ImVec2(ImGui::GetContentRegionAvail())))
             {
-                float* raw = reinterpret_cast<float*>(sd.d.tx.data());
-                int n = sd.d.tx.size();
+                std::lock_guard<std::mutex> lock(sd.s.data_mutex);
+                float* raw = reinterpret_cast<float*>(sd.d.gui_output.data());
+                int n = sd.d.gui_output.size();
                 int stride = sizeof(std::complex<float>);
 
                 ImPlot::PlotLine("I", raw, n, 1.0, 0.0, 0, 0, stride);
@@ -106,8 +146,9 @@ void run_gui(sharedData &sd)
         {
             if (ImPlot::BeginPlot("Constelation Diagramm", ImVec2(ImGui::GetContentRegionAvail())))
             {
-                float* raw = reinterpret_cast<float*>(sd.d.tx.data());
-                int n = sd.d.tx.size();
+                std::lock_guard<std::mutex> lock(sd.s.data_mutex);
+                float* raw = reinterpret_cast<float*>(sd.d.gui_output.data());
+                int n = sd.d.gui_output.size();
                 int stride = sizeof(std::complex<float>);
 
                 ImPlot::PlotScatter("I/Q", raw, raw + 1, n, 0, 0, stride);
@@ -120,6 +161,7 @@ void run_gui(sharedData &sd)
         // End GUI
 
         ImGui::Render();
+
         int w, h;
         glfwGetFramebufferSize(window, &w, &h);
         glViewport(0, 0, w, h);
@@ -128,6 +170,7 @@ void run_gui(sharedData &sd)
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwSwapBuffers(window);
+        
         if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {
             GLFWwindow* backup = glfwGetCurrentContext();
@@ -137,7 +180,7 @@ void run_gui(sharedData &sd)
         }
     }
 
-    sd.f.exit = true;
+    sd.f.a.exit = true;
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImPlot::DestroyContext();
