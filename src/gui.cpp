@@ -77,9 +77,9 @@ void run_gui(sharedData &sd)
 
             if (ImGui::BeginMenu("OFDM params"))
             {
-                ImGui::InputInt("Pilots step", &sd.p.pilots_step, 1, 10);
-                ImGui::InputInt("CP len", &sd.p.cp_len, 1, 10);
-                ImGui::InputFloat("Part of zeros", &sd.p.zero_guard, 0.05, 0.1);
+                ImGui::InputInt("Pilots step", &sd.p.o.pilots_step, 1, 10);
+                ImGui::InputFloat("CP-to-data ratio", &sd.p.o.cp_len, 0.05, 0.1);
+                ImGui::InputFloat("Zero-to-data ratio", &sd.p.o.zero_guard, 0.05, 0.1);
                 ImGui::EndMenu();
             }
                 

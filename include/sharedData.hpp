@@ -10,8 +10,8 @@ struct sharedData
 {
     struct data
     {
-        char c_msg[101] = "";
-        std::string s_msg;
+        char c_msg[101] = "Hello World! Hello Heaven! Hello Paradise! Hello Hello!";
+        std::string s_msg = "Hello World! Hello Heaven! Hello Paradise! Hello Hello!";
         std::string r_msg = "";
         std::vector<std::complex<float>> tx;
 
@@ -31,9 +31,27 @@ struct sharedData
 
     struct params
     {
-        int pilots_step = 7;
-        float zero_guard = 0.1;
-        int cp_len = 16;
+        struct signal
+        {
+            float bandwidth = 8 * 10e6;
+            float carr_freq = 2.4 * 10e9;
+        };
+
+        struct ofdm
+        {
+            int pilots_step = 3;
+            float zero_guard = 0.2;
+            float cp_len = 0.5;
+        };
+
+        struct multipath
+        {
+            int cnt_beam = 6;
+        };
+
+        signal s;
+        ofdm o;
+        multipath m;
     };
     
     data d;

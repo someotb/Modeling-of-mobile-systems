@@ -42,8 +42,8 @@ void run_backend(sharedData &sd)
 
             interleaved = interleave(hamming_encoded);
             symbols = mod_qpsk_3gpp(interleaved);
-            int N_rs = std::floor(symbols.size() / sd.p.pilots_step);
-            int N_z  = (N_rs + symbols.size()) * sd.p.zero_guard; 
+            int N_rs = std::floor(symbols.size() / sd.p.o.pilots_step);
+            int N_z  = (N_rs + symbols.size()) * sd.p.o.zero_guard; 
             int frame_size = symbols.size() + 2 * N_z;
 
             while (true)
@@ -52,7 +52,7 @@ void run_backend(sharedData &sd)
                 int cnt = 0;
                 for (int i = 0; i < frame_size; ++i) {
                     bool in_zero  = (i >= (int)(half - N_z) && i <= (int)(half + N_z));
-                    bool in_pilot = (!in_zero && i % sd.p.pilots_step == 0);
+                    bool in_pilot = (!in_zero && i % sd.p.o.pilots_step == 0);
                     if (!in_zero && !in_pilot) ++cnt;
                 }
                 if (cnt >= (int)symbols.size()) break;
@@ -69,7 +69,7 @@ void run_backend(sharedData &sd)
                     is_zeros[i] = true;
         
             for (size_t i = 0; i < is_pilot.size(); ++i)
-                if (i % sd.p.pilots_step == 0 && !is_zeros[i])
+                if (i % sd.p.o.pilots_step == 0 && !is_zeros[i])
                     is_pilot[i] = true;
             
             for (size_t i = 0; i < is_zeros.size(); ++i)
@@ -79,7 +79,7 @@ void run_backend(sharedData &sd)
             multi_data = channel_multiplexer(is_zeros, is_pilot, is_data, symbols);
             fft dpf(multi_data.size());
             dpf.executeBackward(multi_data);
-            sd.d.tx = add_cp(multi_data, sd.p.cp_len);
+            sd.d.tx = add_cp(multi_data, sd.p.o.cp_len);
 
             /*
             Transmission medium
