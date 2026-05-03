@@ -46,32 +46,44 @@ void run_gui(sharedData &sd)
 
         // Start GUI
 
-
-        if (ImGui::Begin("Text"))
+        if (ImGui::BeginMainMenuBar())
         {
-            ImGui::InputText("Msg", sd.d.c_msg, 101);
-            sd.d.s_msg = sd.d.c_msg;
-            
-            int len = strlen(sd.d.c_msg);
-            
-            if (len < 30)
-                ImGui::TextColored({1,0.3f,0.3f,1}, "Min 30 symbols (%d/30)", len);
-            else
-                ImGui::TextColored({0.3f,1,0.3f,1}, "%d symbols", len);
-            
-            ImGui::BeginDisabled(len < 30 || len > 100);
-            if (ImGui::Button("Send"))
-                sd.f.msg_r = true;
+            if (ImGui::BeginMenu("Control Panel"))
+            {
+                ImGui::InputText("Msg", sd.d.c_msg, 101);
+                sd.d.s_msg = sd.d.c_msg;
+                
+                int len = strlen(sd.d.c_msg);
+                
+                if (len < 30)
+                    ImGui::TextColored({1,0.3f,0.3f,1}, "Min 30 symbols (%d/30)", len);
+                else
+                    ImGui::TextColored({0.3f,1,0.3f,1}, "%d symbols", len);
+                
+                ImGui::BeginDisabled(len < 30 || len > 100);
+                if (ImGui::Button("Send"))
+                    sd.f.msg_r = true;
+        
+                ImGui::EndDisabled();
+        
+                ImGui::Text("Decoded text: %s", sd.d.r_msg.c_str());
+        
+                ImGui::Text("Errors positions");
+                for (size_t i = 0; i < sd.d.ham.errs_pos.size(); ++i)
+                    ImGui::Text("Error pos: %d", sd.d.ham.errs_pos[i]);
 
-            ImGui::EndDisabled();
+                ImGui::EndMenu();
+            }
 
-            ImGui::Text("Decoded text: %s", sd.d.r_msg.c_str());
-
-            ImGui::Text("Errors positions");
-            for (size_t i = 0; i < sd.d.ham.errs_pos.size(); ++i)
-                ImGui::Text("Error pos: %d", sd.d.ham.errs_pos[i]);
-
-            ImGui::End();
+            if (ImGui::BeginMenu("OFDM params"))
+            {
+                ImGui::InputInt("Pilots step", &sd.p.pilots_step, 1, 10);
+                ImGui::InputInt("CP len", &sd.p.cp_len, 1, 10);
+                ImGui::InputFloat("Part of zeros", &sd.p.zero_guard, 0.05, 0.1);
+                ImGui::EndMenu();
+            }
+                
+            ImGui::EndMainMenuBar();
         }
 
         if (ImGui::Begin("PlotLine"))
@@ -87,8 +99,8 @@ void run_gui(sharedData &sd)
 
                 ImPlot::EndPlot();
             }
-            ImGui::End();
         }
+        ImGui::End();
 
         if (ImGui::Begin("PlotScatter"))
         {
@@ -102,8 +114,8 @@ void run_gui(sharedData &sd)
 
                 ImPlot::EndPlot();
             }
-            ImGui::End();
         }
+        ImGui::End();
 
         // End GUI
 
