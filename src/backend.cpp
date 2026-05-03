@@ -12,6 +12,7 @@ void run_backend(sharedData &sd)
     std::vector<std::complex<float>> symbols;
     std::vector<std::complex<float>> multi_data;
     std::vector<std::complex<float>> tx;
+    std::vector<std::complex<float>> tx_noisy;
     std::vector<std::complex<float>> tx_multi_path;
     std::vector<std::complex<float>> tx_multi_path_noisy;
 
@@ -83,6 +84,7 @@ void run_backend(sharedData &sd)
 
             // Transmission medium
 
+            tx_noisy = add_wgn(tx, sd);
             tx_multi_path = add_multipath(tx, sd);
             tx_multi_path_noisy = add_wgn(tx_multi_path, sd);
 
@@ -108,10 +110,13 @@ void run_backend(sharedData &sd)
             case ViewMode::Raw:
                 sd.d.gui_output = tx;
                 break;
+            case ViewMode::Noisy:
+                sd.d.gui_output = tx_noisy;
+                break;
             case ViewMode::Multipath:
                 sd.d.gui_output = tx_multi_path;
                 break;
-            case ViewMode::Noisy:
+            case ViewMode::MultipathNoisy:
                 sd.d.gui_output = tx_multi_path_noisy;
                 break;
         }

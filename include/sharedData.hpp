@@ -7,7 +7,7 @@
 #include <complex>
 #include <mutex>
 
-enum class ViewMode { Raw, Multipath, Noisy };
+enum class ViewMode { Raw, Noisy, Multipath, MultipathNoisy };
 
 struct sharedData
 {

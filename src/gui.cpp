@@ -50,9 +50,10 @@ void run_gui(sharedData &sd)
         {
             if (ImGui::BeginMenu("View"))
             {
-                if (ImGui::RadioButton("Raw TX", (int*)&sd.f.s.view_mode, (int)ViewMode::Raw)){}
+                if (ImGui::RadioButton("Raw", (int*)&sd.f.s.view_mode, (int)ViewMode::Raw)){}
+                if (ImGui::RadioButton("AGN", (int*)&sd.f.s.view_mode, (int)ViewMode::Noisy)){}
                 if (ImGui::RadioButton("Multipath", (int*)&sd.f.s.view_mode, (int)ViewMode::Multipath)){}
-                if (ImGui::RadioButton("Multipath+AGN", (int*)&sd.f.s.view_mode, (int)ViewMode::Noisy)){}
+                if (ImGui::RadioButton("Multipath+AGN", (int*)&sd.f.s.view_mode, (int)ViewMode::MultipathNoisy)){}
                 ImGui::EndMenu();
             }
 
