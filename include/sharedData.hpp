@@ -22,8 +22,27 @@ struct sharedData
         {
             std::vector<int> errs_pos;
         };
+
+        struct debug_info
+        {
+            int max_latency = 0;
+            int cp_samples = 0;
+            int N_z = 0;
+            int frame_size = 0;
+            size_t zeros_half = 0;
+            bool is_pilots;
+            float h_max = 0.0f;
+            int first_pilot = 0;
+            int last_pilot = 0;
+            int pilot_count;
+            size_t rx_size = 0;
+            size_t sym_size = 0;
+            size_t dem_bits_size = 0;
+            size_t expected_size = 0;
+        };
         
-        hamming ham;
+        hamming h;
+        debug_info d;
     };
     
     struct flags
@@ -32,11 +51,13 @@ struct sharedData
         {
             std::atomic_bool exit{false};
             std::atomic_bool run_gui{false};
+            std::atomic_bool apply{false};
         };
 
         struct states
         {
             std::atomic_bool msg_r{false};
+            std::atomic_bool regenerate{true};
             ViewMode view_mode = ViewMode::Raw;
         };
         
@@ -63,13 +84,13 @@ struct sharedData
         {
             int cnt_beam = 6;
             int path_len = 500;
+            std::vector<int> beam_len;
         };
 
         struct wgn
         {
-            int psd = -120;
+            int psd = -125;
         };
-        
 
         signal s;
         ofdm o;
@@ -82,9 +103,9 @@ struct sharedData
         std::mutex data_mutex;
     };
     
-    
     data d;
     flags f;
     params p;
+    params p_edit;
     sync s;
 };

@@ -102,9 +102,9 @@ std::vector<int> hammingDecode(std::vector<int> received, sharedData &sd)
             errorPos |= p;
     }
 
-    if (errorPos != 0)
+    if (errorPos != 0 && errorPos <= n)
     {
-        sd.d.ham.errs_pos.push_back(errorPos);
+        sd.d.h.errs_pos.push_back(errorPos);
         code[errorPos] ^= 1;
     }
 
@@ -206,26 +206,30 @@ std::vector<std::complex<float>> add_multipath(std::vector<std::complex<float>> 
     float c = 3e8;
     float Ts = 1 / sd.p.s.bandwidth;
 
-    std::vector<int> beam_len(sd.p.m.cnt_beam);
-    for (size_t i = 0; i < beam_len.size(); ++i)
-        beam_len[i] = 10 + rand() % (sd.p.m.path_len - 10 + 1);
+    if (sd.f.s.regenerate || sd.p.m.beam_len.empty())
+    {
+        sd.p.m.beam_len.resize(sd.p.m.cnt_beam);
+        for (size_t i = 0; i < sd.p.m.beam_len.size(); ++i)
+            sd.p.m.beam_len[i] = 10 + rand() % (sd.p.m.path_len - 10 + 1);
+        sd.f.s.regenerate = false;
+    }
 
-
-    auto min_beam_it = std::ranges::min_element(beam_len);
-    auto index_beam_it = std::distance(beam_len.begin(), min_beam_it);
-    int first_beam = beam_len[0];
-    beam_len[0] = *min_beam_it;
-    beam_len[index_beam_it] = first_beam;
+    auto min_beam_it = std::ranges::min_element(sd.p.m.beam_len);
+    auto index_beam_it = std::distance(sd.p.m.beam_len.begin(), min_beam_it);
+    int first_beam = sd.p.m.beam_len[0];
+    sd.p.m.beam_len[0] = *min_beam_it;
+    sd.p.m.beam_len[index_beam_it] = first_beam;
 
     std::vector<int> latency(sd.p.m.cnt_beam);
     for (size_t i = 0; i < latency.size(); ++i)
-        latency[i] = std::round((beam_len[i] - beam_len[0]) / (c * Ts));
+        latency[i] = std::round((sd.p.m.beam_len[i] - sd.p.m.beam_len[0]) / (c * Ts));
 
-    std::vector<float> attenuationCoeffs(beam_len.size(), 0);
+    std::vector<float> attenuationCoeffs(sd.p.m.beam_len.size(), 0);
     for (size_t i = 0; i < attenuationCoeffs.size(); ++i)
-        attenuationCoeffs[i] = c / (4 * M_PIf * beam_len[i] * sd.p.s.carr_freq);
+        attenuationCoeffs[i] = c / (4 * M_PIf * sd.p.m.beam_len[i] * sd.p.s.carr_freq);
 
     auto max_latency = std::ranges::max(latency);
+    sd.d.d.max_latency = max_latency;
 
     std::vector<std::complex<float>> tx_multipath(data.size() + max_latency, {0.0f, 0.0f});
     for (size_t k = 0; k < tx_multipath.size(); ++k)
@@ -253,7 +257,15 @@ std::vector<std::complex<float>> add_wgn(std::vector<std::complex<float>> &data,
 std::vector<std::complex<float>> rm_cp(const std::vector<std::complex<float>> &data, size_t tx_size, float size_cp)
 {
     int cp_len = tx_size * size_cp;
-    return std::vector<std::complex<float>>(data.begin() + cp_len, data.end());
+    
+    std::vector<std::complex<float>> data_rm_cp(data.begin() + cp_len, data.end());
+    
+    while (data_rm_cp.size() < tx_size)
+        data_rm_cp.push_back({0.0f, 0.0f});
+    
+    data_rm_cp.resize(tx_size);
+    
+    return data_rm_cp;
 }
 
 std::vector<std::complex<float>> rm_zeros(const std::vector<std::complex<float>> &data, const std::vector<bool> &is_zeros)
@@ -264,4 +276,72 @@ std::vector<std::complex<float>> rm_zeros(const std::vector<std::complex<float>>
             data_no_zeros.push_back(data[i]);
 
     return data_no_zeros;
+}
+
+std::vector<std::complex<float>> equalization(const std::vector<std::complex<float>> &data, const std::vector<bool> &is_pilot, sharedData &sd)
+{
+    std::vector<int> pilots_idx;
+    std::vector<std::complex<float>> H_pilots;
+    std::complex<float> pilots_val = std::complex(1.0f - 2.0f * 1.0f, 1.0f - 2.0f * 1.0f) / std::sqrt(2.0f);
+
+    for (size_t i = 0; i < data.size(); ++i)
+    {
+        if (is_pilot[i])
+        {
+            pilots_idx.push_back(i);
+            H_pilots.push_back(data[i] / pilots_val);
+        }
+    }
+
+    sd.d.d.first_pilot = pilots_idx[0];
+    sd.d.d.last_pilot = pilots_idx.back();
+
+    std::vector<std::complex<float>> H(data.size());
+    for (size_t p = 0; p < pilots_idx.size() - 1; ++p)
+    {
+        int x0 = pilots_idx[p];
+        int x1 = pilots_idx[p + 1];
+        std::complex<float> H0 = H_pilots[p];
+        std::complex<float> H1 = H_pilots[p + 1];
+
+        if (x1 - x0 < sd.p.o.pilots_step)
+        {
+            std::complex<float> fill = (H0 + H1) / 2.0f;
+            for (int x = x0; x <= x1; ++x)
+                H[x] = fill;
+            continue;
+        }
+
+        for (int x = x0; x <= x1; ++x)
+            H[x] = H0 + (H1 - H0) * float(x - x0) / float(x1 - x0);
+    }
+
+    for (size_t x = 0; x < pilots_idx[0]; ++x)
+        H[x] = H_pilots[0];
+
+    for (size_t x = pilots_idx.back(); x < H.size(); ++x)
+        H[x] = H_pilots.back();
+
+    float H_max = 0.0f;
+    for (auto &h : H)
+        H_max = std::max(H_max, std::abs(h));
+
+    std::vector<std::complex<float>> data_eq(H.size());
+    for (size_t i = 0; i < H.size(); ++i)
+        data_eq[i] = data[i] / H[i];
+
+    sd.d.d.h_max = H_max;
+    
+
+    return data_eq;
+}
+
+std::vector<std::complex<float>> rm_pilots(const std::vector<std::complex<float>> &data, const std::vector<bool> &is_pilot)
+{
+    std::vector<std::complex<float>> data_no_pilots;
+    for (size_t i = 0; i < data.size(); ++i)
+        if (!is_pilot[i])
+            data_no_pilots.push_back(data[i]);
+
+    return data_no_pilots;
 }

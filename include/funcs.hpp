@@ -26,3 +26,5 @@ std::vector<std::complex<float>> add_multipath(std::vector<std::complex<float>> 
 std::vector<std::complex<float>> add_wgn(std::vector<std::complex<float>> &data, sharedData &sd);
 std::vector<std::complex<float>> rm_cp(const std::vector<std::complex<float>> &data, size_t tx_size, float size_cp);
 std::vector<std::complex<float>> rm_zeros(const std::vector<std::complex<float>> &data, const std::vector<bool> &is_zeros);
+std::vector<std::complex<float>> equalization(const std::vector<std::complex<float>> &data, const std::vector<bool> &is_pilot, sharedData &sd);
+std::vector<std::complex<float>> rm_pilots(const std::vector<std::complex<float>> &data, const std::vector<bool> &is_pilot);

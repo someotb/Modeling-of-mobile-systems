@@ -62,27 +62,35 @@ void run_gui(sharedData &sd)
                 bool mess_r = sd.f.s.msg_r;
                 if (ImGui::MenuItem("Send", NULL, &mess_r))
                     sd.f.s.msg_r = mess_r;
+
+                bool appl = sd.f.a.apply;
+
+                if (ImGui::MenuItem("Apply", NULL, &appl))
+                    sd.f.a.apply = appl;
                 ImGui::EndMenu();
             }
 
-            if (ImGui::BeginMenu("OFDM params"))
+            if (ImGui::BeginMenu("OFDM"))
             {
-                ImGui::InputInt("Pilots step", &sd.p.o.pilots_step, 1, 10);
-                ImGui::InputFloat("CP-to-data ratio", &sd.p.o.cp_len, 0.05, 0.1);
-                ImGui::InputFloat("Zero-to-data ratio", &sd.p.o.zero_guard, 0.05, 0.1);
+                ImGui::InputInt("Pilots step", &sd.p_edit.o.pilots_step, 1, 10);
+                ImGui::InputFloat("CP-to-data ratio", &sd.p_edit.o.cp_len, 0.05, 0.1);
+                ImGui::InputFloat("Zero-to-data ratio", &sd.p_edit.o.zero_guard, 0.05, 0.1);
                 ImGui::EndMenu();
             }
 
             if (ImGui::BeginMenu("MultiPath"))
             {
-                ImGui::InputInt("Beam count", &sd.p.m.cnt_beam, 1, 10);
-                ImGui::InputInt("Max beam length", &sd.p.m.path_len, 1, 10);
+                ImGui::InputInt("Beam count", &sd.p_edit.m.cnt_beam, 1, 10);
+                ImGui::InputInt("Max beam length", &sd.p_edit.m.path_len, 1, 10);
+                bool regen = sd.f.s.regenerate;
+                if (ImGui::MenuItem("Regenerate channel", NULL, &regen))
+                    sd.f.s.regenerate = regen;
                 ImGui::EndMenu();
             }
 
             if (ImGui::BeginMenu("AGN"))
             {
-                ImGui::InputInt("PSD", &sd.p.w.psd, 1, 10);
+                ImGui::InputInt("PSD", &sd.p_edit.w.psd, 1, 10);
                 ImGui::EndMenu();
             }
 
@@ -116,18 +124,39 @@ void run_gui(sharedData &sd)
             if (debug_panel_open)
             {
                 ImGui::Begin("Debug Panel", &debug_panel_open);
+                ImGui::TextColored({0.3f,1,0.3f,1}, "Sended text: ");
+                ImGui::SameLine();
+                ImGui::Text("%s", sd.d.s_msg.c_str());
                 ImGui::TextColored({0.3f,1,0.3f,1}, "Decoded text: ");
                 ImGui::SameLine();
                 ImGui::Text("%s", sd.d.r_msg.c_str());
+                ImGui::Separator();
+                ImGui::Text("Max Latency: %d", sd.d.d.max_latency);
+                ImGui::Text("CP samples: %d", sd.d.d.cp_samples);
+                ImGui::Text("N_z: %d", sd.d.d.N_z);
+                ImGui::Text("Frame size: %d", sd.d.d.frame_size);
+                ImGui::Text("Zeros start: %d", sd.d.d.zeros_half - sd.d.d.N_z);
+                ImGui::Text("Zeros half: %d", sd.d.d.zeros_half);
+                ImGui::Text("Zeros end: %d", sd.d.d.zeros_half + sd.d.d.N_z);
+                ImGui::Text("Is pilot[164]: %d", sd.d.d.is_pilots);
+                ImGui::Text("H_max = %.6f", sd.d.d.h_max);
+                ImGui::Text("First pilot = %d", sd.d.d.first_pilot);
+                ImGui::Text("Last pilot = %d", sd.d.d.last_pilot);
+                ImGui::Text("Pilot count = %d", sd.d.d.pilot_count);
+                ImGui::Text("RX size: %d", sd.d.d.rx_size);
+                ImGui::Text("Symbols size: %d", sd.d.d.sym_size);
+                ImGui::Text("Dem size: %d", sd.d.d.dem_bits_size);
+                ImGui::Text("Expected size: %d", sd.d.d.expected_size);
 
-                if (sd.d.ham.errs_pos.empty())
+                if (sd.d.h.errs_pos.empty())
                     ImGui::TextColored({0.3f,1,0.3f,1}, "No errors");
                 else
                 {
                     ImGui::TextColored({1,0.3f,0.3f,1}, "Errors positions: ");
-                    for (size_t i = 0; i < sd.d.ham.errs_pos.size(); ++i)
-                    ImGui::TextColored({1,0.3f,0.3f,1}, "Error pos: %d", sd.d.ham.errs_pos[i]);
+                    for (size_t i = 0; i < sd.d.h.errs_pos.size(); ++i)
+                    ImGui::TextColored({1,0.3f,0.3f,1}, "Error pos: %d", sd.d.h.errs_pos[i]);
                 }
+
                 ImGui::End();
             }
                 
