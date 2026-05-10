@@ -160,7 +160,13 @@ void run_backend(sharedData &sd)
 
                 sd.d.h.errs_pos.clear();
                 sd.d.r_msg = "";
+                sd.d.h.cnt_err = 0;
 
+                for (size_t i = 0; i < hamming_encoded.size(); ++i)
+                    for (size_t j = 0; j < hamming_encoded[i].size(); ++j)
+                        if (hamming_encoded[i][j] != deinterleaved[i][j])
+                            sd.d.h.cnt_err++;
+                
                 int word_cnt = 1;
                 for (auto &word : deinterleaved)
                 {
@@ -169,6 +175,11 @@ void run_backend(sharedData &sd)
                     sd.d.r_msg += char(binary_to_decimal(bs));
                     word_cnt += 1;
                 }
+
+                if (sd.d.h.BER.size() > 1000)
+                    sd.d.h.BER.erase(sd.d.h.BER.begin(), sd.d.h.BER.end() - sd.d.h.BER.size() + 1);
+
+                sd.d.h.BER.push_back(static_cast<float>(sd.d.h.cnt_err) / (deinterleaved.size() * 12));
             }
         }
     }

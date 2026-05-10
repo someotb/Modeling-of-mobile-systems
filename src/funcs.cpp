@@ -105,6 +105,7 @@ std::vector<int> hammingDecode(std::vector<int> received, sharedData &sd, const 
     if (errorPos != 0 && errorPos <= n)
     {
         sd.d.h.errs_pos[word_cnt].push_back(errorPos);
+        sd.d.h.cnt_err++;  // Считаем только когда нашли ошибку
         code[errorPos] ^= 1;
     }
 

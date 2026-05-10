@@ -130,6 +130,7 @@ void run_gui(sharedData &sd)
                 ImGui::TextColored({0.3f,1,0.3f,1}, "Decoded text: ");
                 ImGui::SameLine();
                 ImGui::Text("%s", sd.d.r_msg.c_str());
+                ImGui::Text("BER: %f", sd.d.h.BER.back());
                 ImGui::Separator();
                 ImGui::Text("Max Latency: %d", sd.d.d.max_latency);
                 ImGui::Text("CP samples: %d", sd.d.d.cp_samples);
@@ -164,6 +165,19 @@ void run_gui(sharedData &sd)
                     }
                 }
 
+                ImGui::End();
+
+                if (ImGui::Begin("BER"))
+                {
+                    if (!sd.d.h.BER.empty())
+                    {
+                        if (ImPlot::BeginPlot("###BER", ImVec2(ImGui::GetContentRegionAvail())))
+                        {
+                            ImPlot::PlotLine("###BER", sd.d.h.BER.data(), sd.d.h.BER.size());
+                            ImPlot::EndPlot();
+                        }
+                    }
+                }
                 ImGui::End();
             }
                 

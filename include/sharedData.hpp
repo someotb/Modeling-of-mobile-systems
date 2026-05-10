@@ -25,6 +25,8 @@ struct sharedData
         struct hamming
         {
             std::map<int, std::vector<int>> errs_pos;
+            std::vector<float> BER;           
+            int cnt_err;
         };
 
         struct debug_info
