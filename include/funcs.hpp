@@ -15,7 +15,7 @@ std::vector<int> bitsetToVec(std::bitset<8> bs);
 std::bitset<8> vecToBitset(const std::vector<int> &bits);
 bool isPowerOfTwo(int n);
 std::vector<int> hammingEncode(std::vector<int> data);
-std::vector<int> hammingDecode(std::vector<int> received, sharedData &sd);
+std::vector<int> hammingDecode(std::vector<int> received, sharedData &sd, const int &word_cnt);
 std::vector<int> interleave(std::vector<std::vector<int>> &words);
 std::vector<std::vector<int>> deinterleave(std::vector<int> &data, int rows, int cols);
 std::vector<std::complex<float>> mod_qpsk_3gpp(const std::vector<int> &bits);
@@ -28,3 +28,4 @@ std::vector<std::complex<float>> rm_cp(const std::vector<std::complex<float>> &d
 std::vector<std::complex<float>> rm_zeros(const std::vector<std::complex<float>> &data, const std::vector<bool> &is_zeros);
 std::vector<std::complex<float>> equalization(const std::vector<std::complex<float>> &data, const std::vector<bool> &is_pilot, sharedData &sd);
 std::vector<std::complex<float>> rm_pilots(const std::vector<std::complex<float>> &data, const std::vector<bool> &is_pilot);
+std::vector<float> get_spectre(const std::vector<std::complex<float>> &data);

@@ -32,7 +32,7 @@ void run_backend(sharedData &sd)
             sd.f.a.apply = false;
         }
 
-        if (sd.f.s.msg_r)
+        if (!sd.f.s.stop)
         {
             bin_text.clear();
             hamming_encoded.clear();
@@ -121,14 +121,12 @@ void run_backend(sharedData &sd)
             rx_rm_cp = rm_cp(selected, multi_data.size(), sd.p.o.cp_len);
             dpf.executeForward(rx_rm_cp);
 
-            // Эквализация ДО удаления нулей
             int cnt = 0;
             for (auto b : is_pilot) if (b) cnt++;
             sd.d.d.pilot_count = cnt;
 
             rx_eq = equalization(rx_rm_cp, is_pilot, sd);
 
-            // Теперь удаляем нули и пилоты
             rx_rm_cp_zeros = rm_zeros(rx_eq, is_zeros);
 
             std::vector<bool> is_pilot_no_zeros;
@@ -139,29 +137,31 @@ void run_backend(sharedData &sd)
             sd.d.d.is_pilots = is_pilot_no_zeros[164];
 
             rx_eq_no_pilots = rm_pilots(rx_rm_cp_zeros, is_pilot_no_zeros);
-
-            std::lock_guard<std::mutex> lock(sd.s.data_mutex);
-            sd.d.gui_output = rx_eq_no_pilots;
-
-            sd.d.d.rx_size = rx_eq_no_pilots.size();
-            sd.d.d.sym_size = symbols.size();
-
             dem_bits = demod_qpsk_3gpp(rx_eq_no_pilots);
-
-            sd.d.d.dem_bits_size = dem_bits.size();
-            sd.d.d.expected_size = hamming_encoded.size() * hamming_encoded[0].size();
-
             deinterleaved = deinterleave(dem_bits, hamming_encoded.size(), hamming_encoded[0].size());
-            sd.d.r_msg = "";
-            sd.d.h.errs_pos.clear();
 
-            for (auto &word : deinterleaved)
             {
-                auto data_bits = hammingDecode(word, sd);
-                auto bs = vecToBitset(data_bits);
-                sd.d.r_msg += char(binary_to_decimal(bs));
+                std::lock_guard<std::mutex> lock(sd.s.data_mutex);
+
+                sd.d.gui_output = rx_eq_no_pilots;
+                sd.d.gui_spectre = get_spectre(rx_rm_cp);
+                sd.d.d.rx_size = rx_eq_no_pilots.size();
+                sd.d.d.sym_size = symbols.size();
+                sd.d.d.dem_bits_size = dem_bits.size();
+                sd.d.d.expected_size = hamming_encoded.size() * hamming_encoded[0].size();
+
+                sd.d.h.errs_pos.clear();
+                sd.d.r_msg = "";
+
+                int word_cnt = 1;
+                for (auto &word : deinterleaved)
+                {
+                    auto data_bits = hammingDecode(word, sd, word_cnt);
+                    auto bs = vecToBitset(data_bits);
+                    sd.d.r_msg += char(binary_to_decimal(bs));
+                    word_cnt += 1;
+                }
             }
-            sd.f.s.msg_r = false;
         }
     }
 }

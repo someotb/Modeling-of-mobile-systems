@@ -6,6 +6,7 @@
 #include <bitset>
 #include <complex>
 #include <mutex>
+#include <map>
 
 enum class ViewMode { Raw, Noisy, Multipath, MultipathNoisy };
 
@@ -17,10 +18,11 @@ struct sharedData
         std::string s_msg = "Hello World! Hello Heaven! Hello Paradise! Hello Hello!";
         std::string r_msg = "";
         std::vector<std::complex<float>> gui_output;
+        std::vector<float> gui_spectre;
 
         struct hamming
         {
-            std::vector<int> errs_pos;
+            std::map<int, std::vector<int>> errs_pos;
         };
 
         struct debug_info
@@ -56,7 +58,7 @@ struct sharedData
 
         struct states
         {
-            std::atomic_bool msg_r{false};
+            std::atomic_bool stop{false};
             std::atomic_bool regenerate{true};
             ViewMode view_mode = ViewMode::Raw;
         };

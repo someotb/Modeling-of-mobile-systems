@@ -80,7 +80,7 @@ std::vector<int> hammingEncode(std::vector<int> data)
     return std::vector<int>(code.begin() + 1, code.end());
 }
 
-std::vector<int> hammingDecode(std::vector<int> received, sharedData &sd)
+std::vector<int> hammingDecode(std::vector<int> received, sharedData &sd, const int &word_cnt)
 {
     int n = received.size();
     std::vector<int> code(n + 1);
@@ -104,7 +104,7 @@ std::vector<int> hammingDecode(std::vector<int> received, sharedData &sd)
 
     if (errorPos != 0 && errorPos <= n)
     {
-        sd.d.h.errs_pos.push_back(errorPos);
+        sd.d.h.errs_pos[word_cnt].push_back(errorPos);
         code[errorPos] ^= 1;
     }
 
@@ -214,19 +214,21 @@ std::vector<std::complex<float>> add_multipath(std::vector<std::complex<float>> 
         sd.f.s.regenerate = false;
     }
 
-    auto min_beam_it = std::ranges::min_element(sd.p.m.beam_len);
-    auto index_beam_it = std::distance(sd.p.m.beam_len.begin(), min_beam_it);
-    int first_beam = sd.p.m.beam_len[0];
-    sd.p.m.beam_len[0] = *min_beam_it;
-    sd.p.m.beam_len[index_beam_it] = first_beam;
+    std::vector<int> beam_len_local = sd.p.m.beam_len;
+
+    auto min_beam_it = std::ranges::min_element(beam_len_local);
+    auto index_beam_it = std::distance(beam_len_local.begin(), min_beam_it);
+    int first_beam = beam_len_local[0];
+    beam_len_local[0] = *min_beam_it;
+    beam_len_local[index_beam_it] = first_beam;
 
     std::vector<int> latency(sd.p.m.cnt_beam);
     for (size_t i = 0; i < latency.size(); ++i)
-        latency[i] = std::round((sd.p.m.beam_len[i] - sd.p.m.beam_len[0]) / (c * Ts));
+        latency[i] = std::round((beam_len_local[i] - beam_len_local[0]) / (c * Ts));
 
-    std::vector<float> attenuationCoeffs(sd.p.m.beam_len.size(), 0);
+    std::vector<float> attenuationCoeffs(beam_len_local.size(), 0);
     for (size_t i = 0; i < attenuationCoeffs.size(); ++i)
-        attenuationCoeffs[i] = c / (4 * M_PIf * sd.p.m.beam_len[i] * sd.p.s.carr_freq);
+        attenuationCoeffs[i] = c / (4 * M_PIf * beam_len_local[i] * sd.p.s.carr_freq);
 
     auto max_latency = std::ranges::max(latency);
     sd.d.d.max_latency = max_latency;
@@ -336,4 +338,28 @@ std::vector<std::complex<float>> rm_pilots(const std::vector<std::complex<float>
             data_no_pilots.push_back(data[i]);
 
     return data_no_pilots;
+}
+
+std::vector<float> get_spectre(const std::vector<std::complex<float>> &data)
+{
+    std::vector<float> temp(data.size());
+    std::vector<float> mag(data.size());
+    for (size_t i = 0; i < data.size(); ++i)
+    {
+        auto tmp = data[i].real() * data[i].real() + data[i].imag() * data[i].imag();
+
+        if (tmp < 1e-20f)
+            tmp = 1e-20f;
+
+        temp[i] = 10 * std::log10(tmp);
+    }
+
+    size_t half = temp.size() / 2;
+
+    for (size_t i = 0; i < temp.size(); ++i)
+    {
+        int idx = (i + half) % temp.size();
+        mag[i] = temp[idx];
+    }
+    return mag;
 }

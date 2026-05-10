@@ -59,9 +59,9 @@ void run_gui(sharedData &sd)
 
             if (ImGui::BeginMenu("Control Panel"))
             {
-                bool mess_r = sd.f.s.msg_r;
-                if (ImGui::MenuItem("Send", NULL, &mess_r))
-                    sd.f.s.msg_r = mess_r;
+                bool mess_r = sd.f.s.stop;
+                if (ImGui::MenuItem("Stop", NULL, &mess_r))
+                    sd.f.s.stop = mess_r;
 
                 bool appl = sd.f.a.apply;
 
@@ -148,13 +148,20 @@ void run_gui(sharedData &sd)
                 ImGui::Text("Dem size: %d", sd.d.d.dem_bits_size);
                 ImGui::Text("Expected size: %d", sd.d.d.expected_size);
 
-                if (sd.d.h.errs_pos.empty())
-                    ImGui::TextColored({0.3f,1,0.3f,1}, "No errors");
-                else
                 {
-                    ImGui::TextColored({1,0.3f,0.3f,1}, "Errors positions: ");
-                    for (size_t i = 0; i < sd.d.h.errs_pos.size(); ++i)
-                    ImGui::TextColored({1,0.3f,0.3f,1}, "Error pos: %d", sd.d.h.errs_pos[i]);
+                    std::lock_guard<std::mutex> lock(sd.s.data_mutex);
+                    if (sd.d.h.errs_pos.empty())
+                        ImGui::TextColored({0.3f,1,0.3f,1}, "No errors");
+                    else
+                    {
+                        ImGui::TextColored({1,0.3f,0.3f,1}, "Errors detected: ");
+                        for (const auto &[word, errors] : sd.d.h.errs_pos)
+                        {
+                            ImGui::TextColored({1,0.3f,0.3f,1}, "Hamming Symbol %d:", word);
+                            for (const auto &pos : errors)
+                                ImGui::TextColored({1,0.3f,0.3f,1}, "  bit position - %d", pos);
+                        }
+                    }
                 }
 
                 ImGui::End();
@@ -163,9 +170,9 @@ void run_gui(sharedData &sd)
             ImGui::EndMainMenuBar();
         }
 
-        if (ImGui::Begin("PlotLine"))
+        if (ImGui::Begin("I/Q"))
         {
-            if (ImPlot::BeginPlot("I/Q", ImVec2(ImGui::GetContentRegionAvail())))
+            if (ImPlot::BeginPlot("###I/Q", ImVec2(ImGui::GetContentRegionAvail())))
             {
                 std::lock_guard<std::mutex> lock(sd.s.data_mutex);
                 float* raw = reinterpret_cast<float*>(sd.d.gui_output.data());
@@ -180,9 +187,9 @@ void run_gui(sharedData &sd)
         }
         ImGui::End();
 
-        if (ImGui::Begin("PlotScatter"))
+        if (ImGui::Begin("Constelation Diagramm"))
         {
-            if (ImPlot::BeginPlot("Constelation Diagramm", ImVec2(ImGui::GetContentRegionAvail())))
+            if (ImPlot::BeginPlot("###Constelation Diagramm", ImVec2(ImGui::GetContentRegionAvail())))
             {
                 std::lock_guard<std::mutex> lock(sd.s.data_mutex);
                 float* raw = reinterpret_cast<float*>(sd.d.gui_output.data());
@@ -191,6 +198,21 @@ void run_gui(sharedData &sd)
 
                 ImPlot::PlotScatter("I/Q", raw, raw + 1, n, 0, 0, stride);
 
+                ImPlot::EndPlot();
+            }
+        }
+        ImGui::End();
+
+        if (ImGui::Begin("Spectre"))
+        {
+            if (ImPlot::BeginPlot("###Spectre", ImVec2(ImGui::GetContentRegionAvail())))
+            {
+                std::lock_guard<std::mutex> lock(sd.s.data_mutex);
+                float* raw = reinterpret_cast<float*>(sd.d.gui_spectre.data());
+                int n = sd.d.gui_spectre.size();
+                int stride = sizeof(std::complex<float>);
+
+                ImPlot::PlotLine("I/Q", raw, n);
                 ImPlot::EndPlot();
             }
         }
