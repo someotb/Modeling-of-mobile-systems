@@ -18,7 +18,9 @@ struct sharedData
         std::string s_msg = "Hello World! Hello Heaven! Hello Paradise! Hello Hello!";
         std::string r_msg = "";
         std::vector<std::complex<float>> gui_output;
-        std::vector<float> gui_spectre;
+        std::vector<float> gui_spectre_tx;
+        std::vector<float> gui_spectre_rx;
+        std::vector<float> gui_spectre_eq_rx;
 
         struct hamming
         {

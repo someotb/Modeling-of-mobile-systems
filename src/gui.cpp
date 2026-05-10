@@ -203,16 +203,37 @@ void run_gui(sharedData &sd)
         }
         ImGui::End();
 
-        if (ImGui::Begin("Spectre"))
+        if (ImGui::Begin("Spectre TX"))
         {
-            if (ImPlot::BeginPlot("###Spectre", ImVec2(ImGui::GetContentRegionAvail())))
+            if (ImPlot::BeginPlot("Spectrum TX (dB)", ImVec2(ImGui::GetContentRegionAvail())))
             {
                 std::lock_guard<std::mutex> lock(sd.s.data_mutex);
-                float* raw = reinterpret_cast<float*>(sd.d.gui_spectre.data());
-                int n = sd.d.gui_spectre.size();
-                int stride = sizeof(std::complex<float>);
+                if (!sd.d.gui_spectre_tx.empty())
+                    ImPlot::PlotLine("TX", sd.d.gui_spectre_tx.data(), sd.d.gui_spectre_tx.size());
+                ImPlot::EndPlot();
+            }
+        }
+        ImGui::End();
 
-                ImPlot::PlotLine("I/Q", raw, n);
+        if (ImGui::Begin("Spectre RX"))
+        {
+            if (ImPlot::BeginPlot("Spectrum RX (dB)", ImVec2(ImGui::GetContentRegionAvail())))
+            {
+                std::lock_guard<std::mutex> lock(sd.s.data_mutex);
+                if (!sd.d.gui_spectre_rx.empty())
+                    ImPlot::PlotLine("RX", sd.d.gui_spectre_rx.data(), sd.d.gui_spectre_rx.size());
+                ImPlot::EndPlot();
+            }
+        }
+        ImGui::End();
+
+        if (ImGui::Begin("Spectre RX Eq"))
+        {
+            if (ImPlot::BeginPlot("Spectrum After Equalization (dB)", ImVec2(ImGui::GetContentRegionAvail())))
+            {
+                std::lock_guard<std::mutex> lock(sd.s.data_mutex);
+                if (!sd.d.gui_spectre_eq_rx.empty())
+                    ImPlot::PlotLine("EQ RX", sd.d.gui_spectre_eq_rx.data(), sd.d.gui_spectre_eq_rx.size());
                 ImPlot::EndPlot();
             }
         }

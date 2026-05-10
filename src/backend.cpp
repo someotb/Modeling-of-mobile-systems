@@ -93,6 +93,8 @@ void run_backend(sharedData &sd)
             fft dpf(multi_data.size());
             dpf.executeBackward(multi_data);
             tx = add_cp(multi_data, sd.p.o.cp_len);
+            auto tx_spectre = tx;
+            dpf.executeForward(tx_spectre);
 
             // Transmission medium
 
@@ -118,6 +120,9 @@ void run_backend(sharedData &sd)
                     break;
             }
 
+            auto selected_spectre = selected;
+            dpf.executeForward(selected_spectre);
+
             rx_rm_cp = rm_cp(selected, multi_data.size(), sd.p.o.cp_len);
             dpf.executeForward(rx_rm_cp);
 
@@ -126,6 +131,8 @@ void run_backend(sharedData &sd)
             sd.d.d.pilot_count = cnt;
 
             rx_eq = equalization(rx_rm_cp, is_pilot, sd);
+
+            auto rx_eq_spectre = rx_eq;
 
             rx_rm_cp_zeros = rm_zeros(rx_eq, is_zeros);
 
@@ -142,9 +149,10 @@ void run_backend(sharedData &sd)
 
             {
                 std::lock_guard<std::mutex> lock(sd.s.data_mutex);
-
+                sd.d.gui_spectre_tx = get_spectre(tx_spectre);
+                sd.d.gui_spectre_rx = get_spectre(selected_spectre);
+                sd.d.gui_spectre_eq_rx = get_spectre(rx_eq_spectre);
                 sd.d.gui_output = rx_eq_no_pilots;
-                sd.d.gui_spectre = get_spectre(rx_rm_cp);
                 sd.d.d.rx_size = rx_eq_no_pilots.size();
                 sd.d.d.sym_size = symbols.size();
                 sd.d.d.dem_bits_size = dem_bits.size();
