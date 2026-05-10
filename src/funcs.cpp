@@ -297,6 +297,10 @@ std::vector<std::complex<float>> equalization(const std::vector<std::complex<flo
     sd.d.d.last_pilot = pilots_idx.back();
 
     std::vector<std::complex<float>> H(data.size());
+
+    for (int x = 0; x < pilots_idx[0]; ++x)
+        H[x] = H_pilots[0];
+
     for (size_t p = 0; p < pilots_idx.size() - 1; ++p)
     {
         int x0 = pilots_idx[p];
@@ -304,22 +308,11 @@ std::vector<std::complex<float>> equalization(const std::vector<std::complex<flo
         std::complex<float> H0 = H_pilots[p];
         std::complex<float> H1 = H_pilots[p + 1];
 
-        if (x1 - x0 < sd.p.o.pilots_step)
-        {
-            std::complex<float> fill = (H0 + H1) / 2.0f;
-            for (int x = x0; x <= x1; ++x)
-                H[x] = fill;
-            continue;
-        }
-
         for (int x = x0; x <= x1; ++x)
             H[x] = H0 + (H1 - H0) * float(x - x0) / float(x1 - x0);
     }
 
-    for (size_t x = 0; x < pilots_idx[0]; ++x)
-        H[x] = H_pilots[0];
-
-    for (size_t x = pilots_idx.back(); x < H.size(); ++x)
+    for (size_t x = pilots_idx.back() + 1; x < H.size(); ++x)
         H[x] = H_pilots.back();
 
     float H_max = 0.0f;
@@ -331,7 +324,6 @@ std::vector<std::complex<float>> equalization(const std::vector<std::complex<flo
         data_eq[i] = data[i] / H[i];
 
     sd.d.d.h_max = H_max;
-    
 
     return data_eq;
 }

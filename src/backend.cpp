@@ -120,21 +120,25 @@ void run_backend(sharedData &sd)
 
             rx_rm_cp = rm_cp(selected, multi_data.size(), sd.p.o.cp_len);
             dpf.executeForward(rx_rm_cp);
-            rx_rm_cp_zeros = rm_zeros(rx_rm_cp, is_zeros);
+
+            // Эквализация ДО удаления нулей
+            int cnt = 0;
+            for (auto b : is_pilot) if (b) cnt++;
+            sd.d.d.pilot_count = cnt;
+
+            rx_eq = equalization(rx_rm_cp, is_pilot, sd);
+
+            // Теперь удаляем нули и пилоты
+            rx_rm_cp_zeros = rm_zeros(rx_eq, is_zeros);
 
             std::vector<bool> is_pilot_no_zeros;
             for (size_t i = 0; i < is_pilot.size(); ++i)
                 if (!is_zeros[i])
                     is_pilot_no_zeros.push_back(is_pilot[i]);
 
-            int cnt = 0;
-            for (auto b : is_pilot_no_zeros) if (b) cnt++;
-            sd.d.d.pilot_count = cnt;
-
             sd.d.d.is_pilots = is_pilot_no_zeros[164];
 
-            rx_eq = equalization(rx_rm_cp_zeros, is_pilot_no_zeros, sd);
-            rx_eq_no_pilots = rm_pilots(rx_eq, is_pilot_no_zeros);
+            rx_eq_no_pilots = rm_pilots(rx_rm_cp_zeros, is_pilot_no_zeros);
 
             std::lock_guard<std::mutex> lock(sd.s.data_mutex);
             sd.d.gui_output = rx_eq_no_pilots;
